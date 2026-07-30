@@ -1,9 +1,9 @@
-package com.petproject.ecommerce.controller;
+package com.petproject.ecommerce.product.controller;
 
-import com.petproject.ecommerce.dto.request.ProductCreateRequest;
-import com.petproject.ecommerce.dto.response.ProductResponse;
-import com.petproject.ecommerce.entity.Product;
-import com.petproject.ecommerce.service.ProductService;
+import com.petproject.ecommerce.product.dto.request.ProductCreateRequest;
+import com.petproject.ecommerce.product.dto.response.ProductResponse;
+import com.petproject.ecommerce.product.entity.Product;
+import com.petproject.ecommerce.product.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,9 +32,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(
-            @Valid @RequestBody ProductCreateRequest request) {
-
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(service.create(request));

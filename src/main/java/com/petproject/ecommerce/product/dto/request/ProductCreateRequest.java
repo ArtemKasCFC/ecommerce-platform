@@ -1,4 +1,4 @@
-package com.petproject.ecommerce.dto.request;
+package com.petproject.ecommerce.product.dto.request;
 
 
 import jakarta.validation.constraints.NotBlank;

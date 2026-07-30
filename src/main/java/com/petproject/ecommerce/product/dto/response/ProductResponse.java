@@ -1,4 +1,4 @@
-package com.petproject.ecommerce.dto.response;
+package com.petproject.ecommerce.product.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

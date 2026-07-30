@@ -1,4 +1,4 @@
-package com.petproject.ecommerce.entity;
+package com.petproject.ecommerce.product.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,6 +1,6 @@
 package com.petproject.ecommerce.handler;
 
-import com.petproject.ecommerce.dto.response.ErrorResponse;
+import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import com.petproject.ecommerce.exception.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
