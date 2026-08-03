@@ -41,3 +41,5 @@ Thumbs.db
 
 ### Environment ###
 .env
+
+src/test/resources/test.properties
