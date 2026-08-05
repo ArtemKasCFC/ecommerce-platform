@@ -14,7 +14,6 @@ public final class DatabaseClient {
     public static Connection getConnection() {
 
         try {
-
             return DriverManager.getConnection(
                     PropertiesReader.get("db.url"),
                     PropertiesReader.get("db.username"),
@@ -22,11 +21,7 @@ public final class DatabaseClient {
             );
 
         } catch (SQLException e) {
-
-            throw new RuntimeException(
-                    "Cannot connect to database",
-                    e
-            );
+            throw new RuntimeException("Cannot connect to database", e);
         }
     }
 }

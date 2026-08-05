@@ -1,18 +1,26 @@
 package com.petproject.ecommerce.product.dto.request;
 
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductCreateRequest {
+
     @NotBlank(message = "Title must not be blank")
+    @Size(max = 50, message = "Title must not exceed 50 characters")
     private String title;
+
+    @NotNull(message = "Price must not be null")
     @Positive(message = "Price must be positive")
-    private Double price;
+    @DecimalMax(value = "10000", message = "Price must not exceed 10000")
+    private BigDecimal price;
 }

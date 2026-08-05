@@ -31,7 +31,7 @@ public class ProductDb {
                 return Product.builder()
                         .id(resultSet.getLong("id"))
                         .title(resultSet.getString("title"))
-                        .price(resultSet.getDouble("price"))
+                        .price(resultSet.getBigDecimal("price"))
                         .build();
             }
 

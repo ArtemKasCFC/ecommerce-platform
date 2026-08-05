@@ -3,6 +3,8 @@ package com.petproject.ecommerce.product.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -15,9 +17,9 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
-    private Double price;
+    private BigDecimal price;
 
-    public Product(String title, Double price) {
+    public Product(String title, BigDecimal price) {
         this.title = title;
         this.price = price;
     }

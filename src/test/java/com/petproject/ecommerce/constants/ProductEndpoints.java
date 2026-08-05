@@ -1,4 +1,4 @@
-package com.petproject.ecommerce.enpoints;
+package com.petproject.ecommerce.constants;
 
 public final class ProductEndpoints {
 
