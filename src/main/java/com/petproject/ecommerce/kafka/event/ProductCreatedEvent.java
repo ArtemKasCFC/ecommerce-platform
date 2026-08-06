@@ -1,17 +1,24 @@
 package com.petproject.ecommerce.kafka.event;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
-public class ProductCreatedEvent {
-    private Long id;
+public class ProductCreatedEvent extends ProductEvent {
+
     private String title;
     private BigDecimal price;
+
+    public ProductCreatedEvent(Long id, String title, BigDecimal price) {
+        super(id);
+        this.title = title;
+        this.price = price;
+    }
 }
