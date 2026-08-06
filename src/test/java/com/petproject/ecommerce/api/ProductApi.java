@@ -26,6 +26,7 @@ public class ProductApi {
                 .as(new TypeRef<List<ProductResponse>>() {
                 });
     }
+
     public static <T> T getProductById(Long id, Class<T> type, int sc) {
         return given(RequestSpecs.defaultSpec())
                 .when()
@@ -52,5 +53,24 @@ public class ProductApi {
                 .extract()
                 .response()
                 .as(type);
+    }
+
+    public static <T> T deleteProductById(Long id, Class<T> type, int sc) {
+        var response = given(RequestSpecs.defaultSpec())
+                .when()
+                .log().all()
+                .pathParam("id", id)
+                .delete(ProductEndpoints.PRODUCTS_BY_ID)
+                .then()
+                .log().all()
+                .statusCode(sc)
+                .extract()
+                .response();
+
+        if (type == Void.class) {
+            return null;
+        }
+
+        return response.as(type);
     }
 }

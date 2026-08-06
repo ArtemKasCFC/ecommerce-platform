@@ -24,6 +24,14 @@ public class ProductController {
         this.service = service;
     }
 
+    @PostMapping
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(service.create(request))
+                ;
+    }
+
     @GetMapping
     public List<Product> getProducts() {
         return service.getProducts();
@@ -34,11 +42,13 @@ public class ProductController {
         return service.getProduct(id);
     }
 
-    @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable @Positive Long id){
+        service.deleteProduct(id);
+
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(service.create(request));
+                .status(HttpStatus.NO_CONTENT)
+                .build();
     }
 
 }
