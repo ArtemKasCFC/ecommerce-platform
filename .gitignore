@@ -42,4 +42,9 @@ Thumbs.db
 ### Environment ###
 .env
 
+### Allure ###
+.allure/
+allure-results/
+allure-report/
+
 src/test/resources/test.properties
