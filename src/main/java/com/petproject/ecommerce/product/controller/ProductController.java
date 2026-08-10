@@ -1,6 +1,7 @@
 package com.petproject.ecommerce.product.controller;
 
 import com.petproject.ecommerce.product.dto.request.ProductCreateRequest;
+import com.petproject.ecommerce.product.dto.request.ProductUpdateRequest;
 import com.petproject.ecommerce.product.dto.response.ProductResponse;
 import com.petproject.ecommerce.product.entity.Product;
 import com.petproject.ecommerce.product.service.ProductService;
@@ -11,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @RestController
 @RequestMapping("/products")
@@ -28,8 +27,7 @@ public class ProductController {
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(service.create(request))
-                ;
+                .body(service.createProduct(request));
     }
 
     @GetMapping
@@ -38,12 +36,18 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable @Positive Long id) {
+    public Product getProduct(@PathVariable @Positive(message = "Id must be positive") Long id) {
         return service.getProduct(id);
     }
 
+
+    @PutMapping("/{id}")
+    public ProductResponse updateProduct(@Valid @RequestBody ProductUpdateRequest request, @PathVariable @Positive(message = "Id must be positive") Long id) {
+        return service.updateProduct(id, request);
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable @Positive Long id){
+    public ResponseEntity<Void> deleteProduct(@PathVariable @Positive(message = "Id must be positive") Long id) {
         service.deleteProduct(id);
 
         return ResponseEntity
