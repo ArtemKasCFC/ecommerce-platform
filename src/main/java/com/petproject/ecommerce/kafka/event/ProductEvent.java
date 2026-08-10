@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
         property = "eventType")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ProductCreatedEvent.class, name = "PRODUCT_CREATED"),
+        @JsonSubTypes.Type(value = ProductUpdatedEvent.class, name = "PRODUCT_UPDATED"),
         @JsonSubTypes.Type(value = ProductDeletedEvent.class, name = "PRODUCT_DELETED")
 })
 public abstract class ProductEvent {

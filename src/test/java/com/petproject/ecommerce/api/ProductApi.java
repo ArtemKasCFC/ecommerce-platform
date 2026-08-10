@@ -2,6 +2,7 @@ package com.petproject.ecommerce.api;
 
 import com.petproject.ecommerce.constants.ProductEndpoints;
 import com.petproject.ecommerce.product.dto.request.ProductCreateRequest;
+import com.petproject.ecommerce.product.dto.request.ProductUpdateRequest;
 import com.petproject.ecommerce.product.dto.response.ProductResponse;
 import com.petproject.ecommerce.specs.RequestSpecs;
 import com.petproject.ecommerce.specs.ResponseSpec;
@@ -12,6 +13,20 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 
 public class ProductApi {
+
+    public static <T> T createProduct(ProductCreateRequest body, Class<T> type, int sc) {
+        return given(RequestSpecs.defaultSpec())
+                .body(body)
+                .log().all()
+                .when()
+                .post(ProductEndpoints.PRODUCTS)
+                .then()
+                .log().all()
+                .spec(ResponseSpec.defaultSpec(sc))
+                .extract()
+                .response()
+                .as(type);
+    }
 
     public static List<ProductResponse> getProducts(int sc) {
         return given(RequestSpecs.defaultSpec())
@@ -41,12 +56,14 @@ public class ProductApi {
                 .as(type);
     }
 
-    public static <T> T createProduct(ProductCreateRequest body, Class<T> type, int sc) {
+
+    public static <T> T updateProduct(ProductUpdateRequest body, Long id, Class<T> type, int sc) {
         return given(RequestSpecs.defaultSpec())
                 .body(body)
-                .log().all()
                 .when()
-                .post(ProductEndpoints.PRODUCTS)
+                .pathParam("id", id)
+                .log().all()
+                .put(ProductEndpoints.PRODUCTS_BY_ID)
                 .then()
                 .log().all()
                 .spec(ResponseSpec.defaultSpec(sc))
