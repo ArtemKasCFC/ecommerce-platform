@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 public class ProductEventProducer {
 
     private static final String TOPIC = "product-events";
-
     private final KafkaTemplate<String, ProductEvent> kafkaTemplate;
 
     public ProductEventProducer(KafkaTemplate<String, ProductEvent> kafkaTemplate) {

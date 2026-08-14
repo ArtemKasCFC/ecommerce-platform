@@ -47,4 +47,7 @@ Thumbs.db
 allure-results/
 allure-report/
 
+### LocalStack ###
+docker/localstack-data
+
 src/test/resources/test.properties

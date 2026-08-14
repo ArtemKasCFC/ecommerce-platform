@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(callSuper = true)
 public class ProductUpdatedEvent extends ProductEvent {
 
     private String title;
@@ -20,5 +20,10 @@ public class ProductUpdatedEvent extends ProductEvent {
         super(id);
         this.title = title;
         this.price = price;
+    }
+
+    @Override
+    public String getEventType() {
+        return "PRODUCT_UPDATED";
     }
 }
