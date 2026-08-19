@@ -41,7 +41,7 @@ public class ProductKafkaTestConsumer {
 
     }
 
-    public Optional<ProductEvent> read(Long key, Class<? extends ProductEvent> eventType, Duration timeout) {
+    public <T extends ProductEvent> Optional<T> read(Long key, Class<T> eventType, Duration timeout) {
         String expectedKey = String.valueOf(key);
 
         long endTime = System.currentTimeMillis() + timeout.toMillis();
@@ -53,7 +53,7 @@ public class ProductKafkaTestConsumer {
             for (ConsumerRecord<String, ProductEvent> record : records) {
 
                 if (record.key().equals(expectedKey) && eventType.isInstance(record.value())) {
-                    return Optional.of(record.value());
+                    return Optional.of(eventType.cast(record.value()));
                 }
             }
         }

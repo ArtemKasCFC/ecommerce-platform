@@ -2,16 +2,17 @@ package com.petproject.ecommerce.aws;
 
 import com.petproject.ecommerce.kafka.event.ProductEvent;
 import com.petproject.ecommerce.notification.dto.SnsNotification;
-import io.qameta.allure.internal.shadowed.jackson.core.JsonProcessingException;
-import io.qameta.allure.internal.shadowed.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
+import tools.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -125,6 +126,47 @@ public class SqsTestConsumer {
         return response.messages();
     }
 
+    public ProductEvent parseEvent(Message message) {
+
+        SnsNotification notification = objectMapper.readValue(message.body(), SnsNotification.class);
+
+        return objectMapper.readValue(notification.message(), ProductEvent.class);
+
+    }
+
+    private void deleteMessage(Message message) {
+
+        DeleteMessageRequest request = DeleteMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .receiptHandle(message.receiptHandle())
+                .build();
+
+        sqsClient.deleteMessage(request);
+
+        log.info("SQS message deleted: {}", message.messageId());
+    }
+
+    public <T extends ProductEvent> Optional<T> read(Long productId, Class<T> eventType, Duration timeout) {
+        long endTime = System.currentTimeMillis() + timeout.toMillis();
+
+        while (System.currentTimeMillis() < endTime) {
+            List<Message> messages = receiveMessages();
+
+            for (Message message : messages) {
+                ProductEvent event = parseEvent(message);
+
+                if (productId.equals(event.getId()) && eventType.isInstance(event)) {
+
+                    deleteMessage(message);
+
+                    return Optional.of(eventType.cast(event));
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
     public void sendMessage(String messageBody) {
 
         sqsClient.sendMessage(
@@ -136,21 +178,17 @@ public class SqsTestConsumer {
     }
 
     public void sendEvent(ProductEvent event) {
-        try {
-            String eventJson = objectMapper.writeValueAsString(event);
+        String eventJson = objectMapper.writeValueAsString(event);
 
-            SnsNotification notification = new SnsNotification(
-                    "Notification",
-                    UUID.randomUUID().toString(),
-                    findTopicArn(),
-                    eventJson,
-                    LocalDateTime.now().toString()
-            );
+        SnsNotification notification = new SnsNotification(
+                "Notification",
+                UUID.randomUUID().toString(),
+                findTopicArn(),
+                eventJson,
+                LocalDateTime.now().toString()
+        );
 
-            sendMessage(objectMapper.writeValueAsString(notification));
+        sendMessage(objectMapper.writeValueAsString(notification));
 
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

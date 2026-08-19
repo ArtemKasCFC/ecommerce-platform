@@ -2,7 +2,7 @@ package com.petproject.ecommerce.tests;
 
 import com.petproject.ecommerce.api.ProductApi;
 import com.petproject.ecommerce.constants.ValidationMessages;
-import com.petproject.ecommerce.database.ProductDb;
+import com.petproject.ecommerce.database.ProductsDb;
 import com.petproject.ecommerce.factories.ProductFactory;
 import com.petproject.ecommerce.kafka.ProductKafkaTestConsumer;
 import com.petproject.ecommerce.kafka.event.ProductCreatedEvent;
@@ -14,6 +14,7 @@ import com.petproject.ecommerce.product.dto.request.ProductUpdateRequest;
 import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import com.petproject.ecommerce.product.dto.response.ProductResponse;
 import com.petproject.ecommerce.product.entity.Product;
+import com.petproject.ecommerce.steps.ProductSteps;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import java.util.List;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ProductTests {
+class ProductsTests {
 
     private ProductKafkaTestConsumer kafkaConsumer;
 
@@ -56,7 +57,7 @@ class ProductTests {
                 .usingRecursiveComparison()
                 .isEqualTo(createdProduct);
 
-        Product productRecord = ProductDb.findById(createdProduct.getId());
+        Product productRecord = ProductsDb.findById(createdProduct.getId());
         assertThat(createdProduct)
                 .usingRecursiveComparison()
                 .isEqualTo(productRecord);
@@ -69,60 +70,48 @@ class ProductTests {
 
     @Test
     void shouldNotCreateProductWithoutTitle() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        body.setTitle(null);
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setTitle(null), ErrorResponse.class, 400);
 
-        ErrorResponse errorResponse = ProductApi.createProduct(body, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_REQUIRED);
     }
 
     @Test
     void shouldNotCreateProductWhenTitleExceedsMaxLength() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        body.setTitle("A".repeat(51));
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setTitle("A".repeat(51)), ErrorResponse.class, 400);
 
-        ErrorResponse errorResponse = ProductApi.createProduct(body, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_TOO_LONG);
     }
 
     @Test
     void shouldNotCreateProductWithoutPrice() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        body.setPrice(null);
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setPrice(null), ErrorResponse.class, 400);
 
-        ErrorResponse errorResponse = ProductApi.createProduct(body, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_REQUIRED);
     }
 
     @Test
     void shouldNotCreateProductWithNegativePrice() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        body.setPrice(BigDecimal.valueOf(-1.0));
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setPrice(BigDecimal.valueOf(-1.0)), ErrorResponse.class, 400);
 
-        ErrorResponse errorResponse = ProductApi.createProduct(body, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_MUST_BE_POSITIVE);
     }
 
     @Test
     void shouldNotCreateProductWithZeroPrice() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        body.setPrice(BigDecimal.valueOf(0.0));
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setPrice(BigDecimal.valueOf(0.0)), ErrorResponse.class, 400);
 
-        ErrorResponse errorResponse = ProductApi.createProduct(body, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_MUST_BE_POSITIVE);
     }
 
     @Test
     void shouldNotCreateProductWhenPriceExceedsMaxValue() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        body.setPrice(BigDecimal.valueOf(10000.1));
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setPrice(BigDecimal.valueOf(10000.1)), ErrorResponse.class, 400);
 
-        ErrorResponse errorResponse = ProductApi.createProduct(body, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_TOO_HIGH);
     }
@@ -136,9 +125,7 @@ class ProductTests {
 
     @Test
     void shouldGetProductById() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
 
         ProductResponse receivedProduct = ProductApi.getProductById(createdProduct.getId(), ProductResponse.class, 200);
         assertThat(receivedProduct)
@@ -177,8 +164,7 @@ class ProductTests {
 
     @Test
     void shouldUpdateProduct() {
-        ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
 
@@ -197,7 +183,7 @@ class ProductTests {
                 .usingRecursiveComparison()
                 .isEqualTo(updatedProduct);
 
-        Product productRecord = ProductDb.findById(updatedProduct.getId());
+        Product productRecord = ProductsDb.findById(updatedProduct.getId());
         assertThat(updatedProduct)
                 .usingRecursiveComparison()
                 .isEqualTo(productRecord);
@@ -373,7 +359,7 @@ class ProductTests {
         ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
 
         ProductApi.deleteProductById(createdProduct.getId(), Void.class, 204);
-        assertThat(ProductDb.existsById(createdProduct.getId())).isFalse();
+        assertThat(ProductsDb.existsById(createdProduct.getId())).isFalse();
 
         ProductEvent event = kafkaConsumer
                 .read(createdProduct.getId(), ProductDeletedEvent.class, ofSeconds(3))
