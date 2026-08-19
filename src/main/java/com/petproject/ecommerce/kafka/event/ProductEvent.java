@@ -1,14 +1,17 @@
 package com.petproject.ecommerce.kafka.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -21,4 +24,7 @@ import lombok.NoArgsConstructor;
 public abstract class ProductEvent {
 
     private Long id;
+
+    @JsonIgnore
+    public abstract String getEventType();
 }

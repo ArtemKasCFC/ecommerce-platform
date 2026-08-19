@@ -3,7 +3,7 @@ package com.petproject.ecommerce.database;
 import com.petproject.ecommerce.product.entity.Product;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class ProductDb {
+public class ProductsDb {
 
     private static final JdbcTemplate jdbcTemplate =
             DatabaseClient.getJdbcTemplate();

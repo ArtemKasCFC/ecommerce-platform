@@ -2,6 +2,7 @@ package com.petproject.ecommerce.audit.service;
 
 import com.petproject.ecommerce.audit.entity.AuditLog;
 import com.petproject.ecommerce.audit.repository.AuditLogRepository;
+import com.petproject.ecommerce.kafka.event.ProductEvent;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,11 +16,11 @@ public class AuditService {
         this.auditLogRepository = auditLogRepository;
     }
 
-    public void saveProductCreatedEvent(Long productId) {
+    public void saveProductEvent(ProductEvent event) {
 
         AuditLog auditLog = new AuditLog(
-                "PRODUCT_CREATED",
-                productId,
+                event.getEventType(),
+                event.getId(),
                 LocalDateTime.now()
         );
 

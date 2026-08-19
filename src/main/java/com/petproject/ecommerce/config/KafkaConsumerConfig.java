@@ -29,11 +29,6 @@ public class KafkaConsumerConfig {
         );
 
         config.put(
-                ConsumerConfig.GROUP_ID_CONFIG,
-                "product-service-group"
-        );
-
-        config.put(
                 ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 StringDeserializer.class
         );
@@ -45,7 +40,7 @@ public class KafkaConsumerConfig {
 
         config.put(
                 JacksonJsonDeserializer.TRUSTED_PACKAGES,
-                "*"
+                "com.petproject.ecommerce.kafka.event"
         );
 
         return new DefaultKafkaConsumerFactory<>(
@@ -60,6 +55,8 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, ProductCreatedEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory());
+
+        factory.setConcurrency(2);
 
         return factory;
     }
