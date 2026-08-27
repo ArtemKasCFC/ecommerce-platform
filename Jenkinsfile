@@ -46,23 +46,27 @@ pipeline {
         stage('Start infrastructure') {
             steps {
                 bat '''
-                    docker compose --env-file .env -f docker/docker-compose.yml up -d
-
-                    echo Waiting for infrastructure to start...
-                    powershell -Command "Start-Sleep -Seconds 10"
-
+                    docker compose --env-file .env -f docker/docker-compose.yml up -d --wait
                     docker compose --env-file .env -f docker/docker-compose.yml ps
                 '''
             }
         }
 
         stage('Start application') {
-              steps {
-                    powershell '''
-                        Start-Process -FilePath ".\\mvnw.cmd" -ArgumentList "spring-boot:run"
-                        Start-Sleep -Seconds 10
-                    '''
-                }
+            steps {
+                powershell '''
+                    Start-Process -FilePath ".\\mvnw.cmd" -ArgumentList "spring-boot:run"
+
+                    for ($i = 0; $i -lt 30; $i++) {
+                        if (curl.exe -s -o nul -w "%{http_code}" http://localhost:8080/products | Select-String "200") {
+                            exit 0
+                        }
+                        Start-Sleep 2
+                    }
+
+                    throw "Application failed to start"
+                '''
+            }
         }
 
         stage('Run tests') {
