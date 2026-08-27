@@ -37,8 +37,9 @@ public class ProductKafkaTestConsumer {
 
         consumer.subscribe(Collections.singletonList("product-events"));
 
-        consumer.poll(Duration.ofSeconds(1));
-
+        while (consumer.assignment().isEmpty()) {
+            consumer.poll(Duration.ofMillis(100));
+        }
     }
 
     public <T extends ProductEvent> Optional<T> read(Long key, Class<T> eventType, Duration timeout) {
@@ -51,6 +52,13 @@ public class ProductKafkaTestConsumer {
             ConsumerRecords<String, ProductEvent> records = consumer.poll(Duration.ofMillis(500));
 
             for (ConsumerRecord<String, ProductEvent> record : records) {
+                
+                System.out.println(
+                        "KAFKA TEST CONSUMER: key=" + record.key()
+                                + ", type=" + record.value().getClass().getSimpleName()
+                                + ", value=" + record.value()
+                );
+
 
                 if (record.key().equals(expectedKey) && eventType.isInstance(record.value())) {
                     return Optional.of(eventType.cast(record.value()));
