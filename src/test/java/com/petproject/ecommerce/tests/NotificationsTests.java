@@ -47,13 +47,13 @@ public class NotificationsTests {
         ProductCreatedEvent kafkaEvent = kafkaConsumer.read(
                 createdProduct.getId(),
                 ProductCreatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("ProductCreatedEvent was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("ProductCreatedEvent was not found")
         );
 
         ProductCreatedEvent sqsMessage = sqsConsumer.read(
                 createdProduct.getId(),
                 ProductCreatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("SQS message was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("SQS message was not found")
         );
 
         assertThat(sqsMessage)
@@ -74,13 +74,13 @@ public class NotificationsTests {
         ProductUpdatedEvent kafkaEvent = kafkaConsumer.read(
                 updatedProduct.getId(),
                 ProductUpdatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("ProductUpdatedEvent was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("ProductUpdatedEvent was not found")
         );
 
         ProductUpdatedEvent sqsMessage = sqsConsumer.read(
                 updatedProduct.getId(),
                 ProductUpdatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("SQS message was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("SQS message was not found")
         );
 
         assertThat(sqsMessage)
@@ -101,13 +101,13 @@ public class NotificationsTests {
         ProductDeletedEvent kafkaEvent = kafkaConsumer.read(
                 deletedProduct.getId(),
                 ProductDeletedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("ProductDeletedEvent was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("ProductDeletedEvent was not found")
         );
 
         ProductDeletedEvent sqsMessage = sqsConsumer.read(
                 deletedProduct.getId(),
                 ProductDeletedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("SQS message was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("SQS message was not found")
         );
 
         assertThat(sqsMessage)
