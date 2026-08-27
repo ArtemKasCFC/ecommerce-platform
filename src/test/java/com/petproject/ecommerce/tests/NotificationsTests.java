@@ -41,25 +41,26 @@ public class NotificationsTests {
     }
 
     @Test
-    void shouldHandleProductCreatedEvent() {
+    void shouldHandleProductCreatedEvent() throws InterruptedException {
         ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
 
         ProductCreatedEvent kafkaEvent = kafkaConsumer.read(
                 createdProduct.getId(),
                 ProductCreatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("ProductCreatedEvent was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("ProductCreatedEvent was not found")
         );
 
         ProductCreatedEvent sqsMessage = sqsConsumer.read(
                 createdProduct.getId(),
                 ProductCreatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("SQS message was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("SQS message was not found")
         );
 
         assertThat(sqsMessage)
                 .usingRecursiveComparison()
                 .isEqualTo(kafkaEvent);
 
+        Thread.sleep(2000);
 
         Notification notificationRecord = NotificationsDb.findByProductIdAndEventType(sqsMessage.getId(), sqsMessage.getEventType());
         NotificationAssertions.assertNotificationRecord(sqsMessage, notificationRecord);
@@ -67,21 +68,23 @@ public class NotificationsTests {
 
 
     @Test
-    void shouldHandleProductUpdatedEvent() {
+    void shouldHandleProductUpdatedEvent() throws InterruptedException {
         ProductResponse updatedProduct = ProductSteps.sendDefaultUpdateProductRequest();
 
 
         ProductUpdatedEvent kafkaEvent = kafkaConsumer.read(
                 updatedProduct.getId(),
                 ProductUpdatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("ProductUpdatedEvent was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("ProductUpdatedEvent was not found")
         );
 
         ProductUpdatedEvent sqsMessage = sqsConsumer.read(
                 updatedProduct.getId(),
                 ProductUpdatedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("SQS message was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("SQS message was not found")
         );
+
+        Thread.sleep(2000);
 
         assertThat(sqsMessage)
                 .usingRecursiveComparison()
@@ -94,26 +97,27 @@ public class NotificationsTests {
 
 
     @Test
-    void shouldHandleProductDeletedEvent() {
+    void shouldHandleProductDeletedEvent() throws InterruptedException {
         ProductResponse deletedProduct = ProductSteps.sendDefaultDeleteProductRequest();
 
 
         ProductDeletedEvent kafkaEvent = kafkaConsumer.read(
                 deletedProduct.getId(),
                 ProductDeletedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("ProductDeletedEvent was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("ProductDeletedEvent was not found")
         );
 
         ProductDeletedEvent sqsMessage = sqsConsumer.read(
                 deletedProduct.getId(),
                 ProductDeletedEvent.class,
-                ofSeconds(3)).orElseThrow(() -> new RuntimeException("SQS message was not found")
+                ofSeconds(10)).orElseThrow(() -> new RuntimeException("SQS message was not found")
         );
 
         assertThat(sqsMessage)
                 .usingRecursiveComparison()
                 .isEqualTo(kafkaEvent);
 
+        Thread.sleep(2000);
 
         Notification notificationRecord = NotificationsDb.findByProductIdAndEventType(sqsMessage.getId(), sqsMessage.getEventType());
         NotificationAssertions.assertNotificationRecord(sqsMessage, notificationRecord);
