@@ -67,7 +67,7 @@ pipeline {
 
         stage('Run tests') {
             steps {
-                bat '.\\mvnw.cmd clean test -Dtest=NotificationsTests'
+                bat '.\\mvnw.cmd clean test'
             }
         }
     }
