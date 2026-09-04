@@ -27,17 +27,7 @@ public class KafkaConsumerConfig {
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 "localhost:9092"
         );
-
-        config.put(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                StringDeserializer.class
-        );
-
-        config.put(
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                JacksonJsonDeserializer.class
-        );
-
+        
         config.put(
                 JacksonJsonDeserializer.TRUSTED_PACKAGES,
                 "com.petproject.ecommerce.kafka.event"
