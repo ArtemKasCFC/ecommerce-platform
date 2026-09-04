@@ -15,8 +15,8 @@ import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import com.petproject.ecommerce.product.dto.response.ProductResponse;
 import com.petproject.ecommerce.product.entity.Product;
 import com.petproject.ecommerce.steps.ProductSteps;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -27,15 +27,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ProductsTests {
 
-    private ProductKafkaTestConsumer kafkaConsumer;
+    private static ProductKafkaTestConsumer kafkaConsumer;
 
-    @BeforeEach
-    void setUpConsumer() {
+    @BeforeAll
+    static void setUpConsumer() {
         kafkaConsumer = new ProductKafkaTestConsumer();
     }
 
-    @AfterEach
-    void closeConsumer() {
+    @AfterAll
+    static void closeConsumer() {
         kafkaConsumer.close();
     }
 

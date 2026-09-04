@@ -10,14 +10,13 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 
 import java.time.Duration;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
 public class ProductKafkaTestConsumer {
 
     private final KafkaConsumer<String, ProductEvent> consumer;
-
 
     public ProductKafkaTestConsumer() {
 
@@ -27,15 +26,9 @@ public class ProductKafkaTestConsumer {
 
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "product-service-test-group");
 
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
-
-
         consumer = new KafkaConsumer<>(config, new StringDeserializer(), new JacksonJsonDeserializer<>(ProductEvent.class));
 
-
-        consumer.subscribe(Collections.singletonList("product-events"));
+        consumer.subscribe(List.of("product-events"));
 
         while (consumer.assignment().isEmpty()) {
             consumer.poll(Duration.ofMillis(100));
@@ -52,7 +45,7 @@ public class ProductKafkaTestConsumer {
             ConsumerRecords<String, ProductEvent> records = consumer.poll(Duration.ofMillis(500));
 
             for (ConsumerRecord<String, ProductEvent> record : records) {
-                
+
                 System.out.println(
                         "KAFKA TEST CONSUMER: key=" + record.key()
                                 + ", type=" + record.value().getClass().getSimpleName()

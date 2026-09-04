@@ -11,7 +11,8 @@ import com.petproject.ecommerce.notification.entity.Notification;
 import com.petproject.ecommerce.product.dto.response.ProductResponse;
 import com.petproject.ecommerce.steps.ProductSteps;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class NotificationsTests {
 
     private SqsTestConsumer sqsConsumer;
-    private ProductKafkaTestConsumer kafkaConsumer;
+    private static ProductKafkaTestConsumer kafkaConsumer;
 
     @BeforeEach
     void setUpSqsQueue() {
@@ -30,13 +31,13 @@ public class NotificationsTests {
         sqsConsumer.initialize();
     }
 
-    @BeforeEach
-    void setUpConsumer() {
+    @BeforeAll
+    static void setUpConsumer() {
         kafkaConsumer = new ProductKafkaTestConsumer();
     }
 
-    @AfterEach
-    void closeConsumer() {
+    @AfterAll
+    static void closeConsumer() {
         kafkaConsumer.close();
     }
 
