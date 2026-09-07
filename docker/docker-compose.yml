@@ -43,5 +43,23 @@ services:
     volumes:
       - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+  splunk:
+    image: splunk/splunk:latest
+    ports:
+      - "8000:8000"
+      - "8088:8088"
+    environment:
+      SPLUNK_START_ARGS: --accept-license
+      SPLUNK_GENERAL_TERMS: --accept-sgt-current-at-splunk-com
+      SPLUNK_PASSWORD: ${SPLUNK_PASSWORD}
+    volumes:
+      - ./splunk/local:/opt/splunk/etc/apps/ecommerce_logs/local
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    depends_on:
+      - splunk
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
 volumes:
   postgres-data:
