@@ -1,6 +1,7 @@
 package com.petproject.ecommerce.handler;
 
-import com.petproject.ecommerce.exception.ProductNotFoundException;
+import com.petproject.ecommerce.exception.AlreadyExistsException;
+import com.petproject.ecommerce.exception.NotFoundException;
 import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,18 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleProductNotFound(
-            ProductNotFoundException exception) {
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyExists(AlreadyExistsException e) {
+        ErrorResponse response = new ErrorResponse(409, e.getMessage(), LocalDateTime.now());
 
-        ErrorResponse response =
-                new ErrorResponse(404, exception.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException e) {
+
+        ErrorResponse response = new ErrorResponse(404, e.getMessage(), LocalDateTime.now());
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -30,12 +37,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, HandlerMethodValidationException.class})
-    public ResponseEntity<ErrorResponse> handleValidationErrors(
-            Exception exception) {
+    public ResponseEntity<ErrorResponse> handleValidationErrors(Exception e) {
 
         Map<String, String> errors = new HashMap<>();
 
-        if (exception instanceof MethodArgumentNotValidException ex) {
+        if (e instanceof MethodArgumentNotValidException ex) {
 
             ex.getBindingResult()
                     .getFieldErrors()
@@ -45,7 +51,7 @@ public class GlobalExceptionHandler {
                                     error.getDefaultMessage()
                             )
                     );
-        } else if (exception instanceof HandlerMethodValidationException ex) {
+        } else if (e instanceof HandlerMethodValidationException ex) {
             ex.getParameterValidationResults()
                     .forEach(result -> {
                         if (result instanceof ParameterErrors parameterErrors) {
@@ -57,8 +63,7 @@ public class GlobalExceptionHandler {
                     });
         }
 
-        ErrorResponse response =
-                new ErrorResponse(400, "Validation failed", LocalDateTime.now(), errors);
+        ErrorResponse response = new ErrorResponse(400, "Validation failed", LocalDateTime.now(), errors);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
