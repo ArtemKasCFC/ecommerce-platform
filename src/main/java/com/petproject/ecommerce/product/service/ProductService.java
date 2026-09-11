@@ -1,6 +1,6 @@
 package com.petproject.ecommerce.product.service;
 
-import com.petproject.ecommerce.exception.ProductNotFoundException;
+import com.petproject.ecommerce.exception.NotFoundException;
 import com.petproject.ecommerce.kafka.event.ProductCreatedEvent;
 import com.petproject.ecommerce.kafka.event.ProductDeletedEvent;
 import com.petproject.ecommerce.kafka.event.ProductUpdatedEvent;
@@ -41,11 +41,11 @@ public class ProductService {
 
 
     public Product getProduct(Long id) {
-        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+        return productRepository.findById(id).orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
     }
 
     public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+        Product product = productRepository.findById(id).orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
 
         product.setTitle(request.getTitle());
         product.setPrice(request.getPrice());
@@ -58,7 +58,7 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found"));
+        Product product = productRepository.findById(id).orElseThrow(() -> new NotFoundException("Product with id " + id + " not found"));
         productRepository.delete(product);
 
         productEventProducer.send(new ProductDeletedEvent(product.getId()));
