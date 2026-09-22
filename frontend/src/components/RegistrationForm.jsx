@@ -11,7 +11,7 @@ function RegistrationForm({
                               onSubmit
                           }) {
     return (
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} noValidate>
             <FormField
                 id="name"
                 label="Name"
