@@ -11,6 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Builder
 public class UserCreateRequest {
     @NotBlank(message = "Request must contain name")
     @Size(max = 100, message = "Name must not exceed 100 characters")
