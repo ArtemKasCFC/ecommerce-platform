@@ -3,15 +3,28 @@ package com.petproject.ecommerce.constants;
 public final class ValidationMessages {
 
     // Users
-    public static final String NAME_REQUIRED = "Name is required";
+    public static final String NAME_REQUIRED = "Request must contain name";
     public static final String NAME_TOO_LONG = "Name must not exceed 100 characters";
 
-    public static final String EMAIL_REQUIRED = "Email is required";
+    public static final String EMAIL_REQUIRED = "Request must contain email";
     public static final String EMAIL_INVALID = "Invalid email";
     public static final String EMAIL_ALREADY_EXISTS = "User with this email already exists";
 
-    public static final String PASSWORD_REQUIRED = "Password is required";
+    public static final String PASSWORD_REQUIRED = "Request must contain password";
     public static final String PASSWORD_LENGTH_ERROR = "Password's length must be between 8 and 64 characters";
+    public static final String PASSWORD_INVALID = "Password must contain uppercase, lowercase, digit and special character";
+
+
+    // Users UI
+    public static final String NAME_REQUIRED_UI = "Name is required";
+    public static final String NAME_TOO_LONG_UI = "Name must not exceed 100 characters";
+
+    public static final String EMAIL_REQUIRED_UI = "Email is required";
+    public static final String EMAIL_INVALID_UI = "Invalid email";
+    public static final String EMAIL_ALREADY_EXISTS_UI = "User with this email already exists";
+
+    public static final String PASSWORD_REQUIRED_UI = "Password is required";
+    public static final String PASSWORD_LENGTH_ERROR_UI = "Password's length must be between 8 and 64 characters";
     public static final String PASSWORD_UPPERCASE_REQUIRED = "Password must contain an uppercase letter";
     public static final String PASSWORD_LOWERCASE_REQUIRED = "Password must contain a lowercase letter";
     public static final String PASSWORD_DIGIT_REQUIRED = "Password must contain a digit";
