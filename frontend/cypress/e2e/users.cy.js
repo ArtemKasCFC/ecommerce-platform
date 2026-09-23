@@ -61,7 +61,7 @@ describe('Registration', () => {
         cy.get('#email').should("have.class", 'is-invalid');
     });
 
-    ["invalid-email", "test@", "@gmail.com", "test@gmail"].forEach(email => {
+    ["invalid-email", "test@", "@gmail.com", "test@gmail", "test@gmail."].forEach(email => {
         it(`should not register a user with an invalid email format: ${email}`, () => {
             const user = defaultUser();
             user.email = email;

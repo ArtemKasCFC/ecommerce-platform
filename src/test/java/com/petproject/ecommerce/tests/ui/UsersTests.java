@@ -55,7 +55,7 @@ public class UsersTests {
         request.setName("");
         registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_REQUIRED);
+        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_REQUIRED_UI);
 
         assertThat(registrationPage.getInvalidField("#name").isDisplayed()).isTrue();
     }
@@ -66,7 +66,7 @@ public class UsersTests {
         request.setName("A".repeat(101));
         registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_TOO_LONG);
+        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_TOO_LONG_UI);
 
         assertThat(registrationPage.getInvalidField("#name").isDisplayed()).isTrue();
     }
@@ -77,7 +77,7 @@ public class UsersTests {
         request.setEmail("");
         registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_REQUIRED);
+        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_REQUIRED_UI);
 
         assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
     }
@@ -94,7 +94,7 @@ public class UsersTests {
 
         registrationPage.register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_ALREADY_EXISTS);
+        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_ALREADY_EXISTS_UI);
 
         assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
     }
@@ -104,14 +104,15 @@ public class UsersTests {
             "invalid-email",
             "test@",
             "@gmail.com",
-            "test@gmail"
+            "test@gmail",
+            "test@gmail."
     })
     void shouldNotRegisterUserWithInvalidEmailFormat(String email) {
         UserCreateRequest request = UserFactory.defaultUser();
         request.setEmail(email);
         registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_INVALID);
+        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_INVALID_UI);
 
         assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
     }
@@ -122,7 +123,7 @@ public class UsersTests {
         request.setPassword("");
         registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(ValidationMessages.PASSWORD_REQUIRED);
+        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(ValidationMessages.PASSWORD_REQUIRED_UI);
 
         assertThat(registrationPage.getInvalidField("#password").isDisplayed()).isTrue();
     }
@@ -141,8 +142,8 @@ public class UsersTests {
 
     static Stream<Arguments> invalidPasswords() {
         return Stream.of(
-                Arguments.of("Pass!23", ValidationMessages.PASSWORD_LENGTH_ERROR),
-                Arguments.of("Pa!23".repeat(13), ValidationMessages.PASSWORD_LENGTH_ERROR),
+                Arguments.of("Pass!23", ValidationMessages.PASSWORD_LENGTH_ERROR_UI),
+                Arguments.of("Pa!23".repeat(13), ValidationMessages.PASSWORD_LENGTH_ERROR_UI),
                 Arguments.of("pass!123", ValidationMessages.PASSWORD_UPPERCASE_REQUIRED),
                 Arguments.of("PASS!123", ValidationMessages.PASSWORD_LOWERCASE_REQUIRED),
                 Arguments.of("Pass!!!!", ValidationMessages.PASSWORD_DIGIT_REQUIRED),
@@ -155,11 +156,11 @@ public class UsersTests {
         registrationPage.open();
         driver.findElement(RegistrationPage.CREATE_ACCOUNT_BTN).click();
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_REQUIRED);
+        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_REQUIRED_UI);
         assertThat(registrationPage.getInvalidField("#name").isDisplayed()).isTrue();
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_REQUIRED);
+        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_REQUIRED_UI);
         assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
-        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(ValidationMessages.PASSWORD_REQUIRED);
+        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(ValidationMessages.PASSWORD_REQUIRED_UI);
         assertThat(registrationPage.getInvalidField("#password").isDisplayed()).isTrue();
 
         UserCreateRequest request = UserFactory.defaultUser();

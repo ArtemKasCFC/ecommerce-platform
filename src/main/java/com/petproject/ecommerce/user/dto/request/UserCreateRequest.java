@@ -1,6 +1,5 @@
 package com.petproject.ecommerce.user.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -18,7 +17,10 @@ public class UserCreateRequest {
     private String name;
 
     @NotBlank(message = "Request must contain email")
-    @Email(message = "Invalid email")
+    @Pattern(
+            regexp = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            message = "Invalid email"
+    )
     private String email;
 
     @NotBlank(message = "Request must contain password")
