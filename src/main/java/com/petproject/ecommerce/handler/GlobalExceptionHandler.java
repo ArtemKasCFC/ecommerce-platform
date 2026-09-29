@@ -1,6 +1,7 @@
 package com.petproject.ecommerce.handler;
 
 import com.petproject.ecommerce.exception.AlreadyExistsException;
+import com.petproject.ecommerce.exception.AuthenticationException;
 import com.petproject.ecommerce.exception.NotFoundException;
 import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationErrors(AuthenticationException e) {
+        ErrorResponse response = new ErrorResponse(401, e.getMessage(), LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(response);
+    }
 
     @ExceptionHandler(AlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleAlreadyExists(AlreadyExistsException e) {

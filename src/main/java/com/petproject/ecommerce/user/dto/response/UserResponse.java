@@ -1,6 +1,6 @@
 package com.petproject.ecommerce.user.dto.response;
 
-import com.petproject.ecommerce.user.enums.Statuses;
+import com.petproject.ecommerce.user.enums.UserStatuses;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -14,6 +14,6 @@ public class UserResponse {
     private Long id;
     private String name;
     private String email;
-    private Statuses status;
+    private UserStatuses status;
     private LocalDateTime createdAt;
 }

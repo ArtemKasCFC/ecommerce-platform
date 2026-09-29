@@ -4,7 +4,7 @@ import com.petproject.ecommerce.exception.AlreadyExistsException;
 import com.petproject.ecommerce.user.dto.request.UserCreateRequest;
 import com.petproject.ecommerce.user.dto.response.UserResponse;
 import com.petproject.ecommerce.user.entity.User;
-import com.petproject.ecommerce.user.enums.Statuses;
+import com.petproject.ecommerce.user.enums.UserStatuses;
 import com.petproject.ecommerce.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class UserService {
 
         String hash = passwordEncoder.encode(request.getPassword());
 
-        User user = new User(normalizedEmail, request.getName(), hash, Statuses.ACTIVE, LocalDateTime.now());
+        User user = new User(normalizedEmail, request.getName(), hash, UserStatuses.ACTIVE, LocalDateTime.now());
         User savedUser = userRepository.save(user);
 
         return new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getEmail(), savedUser.getStatus(), savedUser.getCreatedAt());

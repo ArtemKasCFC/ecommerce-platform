@@ -2,7 +2,7 @@ package com.petproject.ecommerce.database;
 
 import com.petproject.ecommerce.user.entity.User;
 import com.petproject.ecommerce.user.enums.Roles;
-import com.petproject.ecommerce.user.enums.Statuses;
+import com.petproject.ecommerce.user.enums.UserStatuses;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.LocalDateTime;
@@ -34,7 +34,7 @@ public class UsersDb {
                         .name(rs.getString("name"))
                         .password(rs.getString("password"))
                         .role(Roles.valueOf(rs.getString("role")))
-                        .status(Statuses.valueOf(rs.getString("status")))
+                        .status(UserStatuses.valueOf(rs.getString("status")))
                         .build(),
                 id);
     }
