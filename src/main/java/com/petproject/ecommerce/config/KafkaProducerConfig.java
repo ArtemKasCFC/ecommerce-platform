@@ -37,6 +37,16 @@ public class KafkaProducerConfig {
                 JacksonJsonSerializer.class
         );
 
+        config.put(
+                ProducerConfig.RETRIES_CONFIG,
+                5
+        );
+
+        config.put(
+                ProducerConfig.RETRY_BACKOFF_MS_CONFIG,
+                2000
+        );
+
         return new DefaultKafkaProducerFactory<>(config);
     }
 

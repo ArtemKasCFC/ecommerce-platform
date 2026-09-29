@@ -1,6 +1,6 @@
 package com.petproject.ecommerce.user.enums;
 
-public enum Statuses {
+public enum UserStatuses {
     ACTIVE,
-    INACTIVE
+    DISABLED
 }

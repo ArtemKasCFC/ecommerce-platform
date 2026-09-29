@@ -1,7 +1,7 @@
 package com.petproject.ecommerce.user.entity;
 
 import com.petproject.ecommerce.user.enums.Roles;
-import com.petproject.ecommerce.user.enums.Statuses;
+import com.petproject.ecommerce.user.enums.UserStatuses;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,11 +30,11 @@ public class User {
     private Roles role;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Statuses status;
+    private UserStatuses status;
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public User(String email, String name, String password, Statuses status, LocalDateTime createdAt) {
+    public User(String email, String name, String password, UserStatuses status, LocalDateTime createdAt) {
         this.email = email;
         this.name = name;
         this.password = password;
