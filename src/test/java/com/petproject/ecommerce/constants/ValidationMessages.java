@@ -2,6 +2,10 @@ package com.petproject.ecommerce.constants;
 
 public final class ValidationMessages {
 
+    // Auth
+    public static final String AUTH_REQUIRED = "Authentication required";
+    public static final String ACCESS_DENIED = "Access denied";
+
     // Users
     public static final String NAME_REQUIRED = "Request must contain name";
     public static final String NAME_TOO_LONG = "Name must not exceed 100 characters";

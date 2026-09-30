@@ -2,7 +2,6 @@ package com.petproject.ecommerce.user.service;
 
 import com.petproject.ecommerce.exception.AlreadyExistsException;
 import com.petproject.ecommerce.user.dto.request.UserCreateRequest;
-import com.petproject.ecommerce.user.dto.response.UserResponse;
 import com.petproject.ecommerce.user.entity.User;
 import com.petproject.ecommerce.user.enums.UserStatuses;
 import com.petproject.ecommerce.user.repository.UserRepository;
@@ -22,8 +21,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserResponse createUser(UserCreateRequest request) {
-
+    public User createUser(UserCreateRequest request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         if (userRepository.existsByEmail(normalizedEmail)) {
@@ -32,9 +30,14 @@ public class UserService {
 
         String hash = passwordEncoder.encode(request.getPassword());
 
-        User user = new User(normalizedEmail, request.getName(), hash, UserStatuses.ACTIVE, LocalDateTime.now());
-        User savedUser = userRepository.save(user);
+        User user = new User(
+                normalizedEmail,
+                request.getName(),
+                hash,
+                UserStatuses.ACTIVE,
+                LocalDateTime.now()
+        );
 
-        return new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getEmail(), savedUser.getStatus(), savedUser.getCreatedAt());
+        return userRepository.save(user);
     }
 }

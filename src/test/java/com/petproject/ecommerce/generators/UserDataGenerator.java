@@ -15,6 +15,6 @@ public class UserDataGenerator {
     }
 
     public static String randomPassword() {
-        return FAKER.internet().password(8, 64, true, true, true);
+        return "Pa1!" + FAKER.internet().password(4, 60, true, true, true);
     }
 }
