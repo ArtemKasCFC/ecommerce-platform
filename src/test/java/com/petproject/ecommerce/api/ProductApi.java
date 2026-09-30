@@ -14,9 +14,11 @@ import static io.restassured.RestAssured.given;
 
 public class ProductApi {
 
-    public static <T> T createProduct(ProductCreateRequest body, Class<T> type, int sc) {
+
+    public static <T> T createProduct(ProductCreateRequest body, String token, Class<T> type, int sc) {
         return given(RequestSpecs.defaultSpec())
                 .body(body)
+                .auth().oauth2(token)
                 .log().all()
                 .when()
                 .post(ProductEndpoints.PRODUCTS)
@@ -57,9 +59,10 @@ public class ProductApi {
     }
 
 
-    public static <T> T updateProduct(ProductUpdateRequest body, Long id, Class<T> type, int sc) {
+    public static <T> T updateProduct(ProductUpdateRequest body, String token, Long id, Class<T> type, int sc) {
         return given(RequestSpecs.defaultSpec())
                 .body(body)
+                .auth().oauth2(token)
                 .when()
                 .pathParam("id", id)
                 .log().all()
@@ -72,8 +75,9 @@ public class ProductApi {
                 .as(type);
     }
 
-    public static <T> T deleteProductById(Long id, Class<T> type, int sc) {
+    public static <T> T deleteProductById(Long id, String token, Class<T> type, int sc) {
         var response = given(RequestSpecs.defaultSpec())
+                .auth().oauth2(token)
                 .when()
                 .log().all()
                 .pathParam("id", id)

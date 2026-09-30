@@ -47,7 +47,7 @@ public class UsersTests {
     @Test
     void shouldNotCreateUserWithEmptyName() {
         UserCreateRequest body = UserFactory.defaultUser();
-        body.setName("");
+        body.setName(null);
         ErrorResponse errorResponse = UserApi.createUser(body, ErrorResponse.class, 400);
 
         assertThat(errorResponse.getStatus()).isEqualTo(400);
@@ -67,7 +67,7 @@ public class UsersTests {
     @Test
     void shouldNotCreateUserWithEmptyEmail() {
         UserCreateRequest body = UserFactory.defaultUser();
-        body.setEmail("");
+        body.setEmail(null);
         ErrorResponse errorResponse = UserApi.createUser(body, ErrorResponse.class, 400);
 
         assertThat(errorResponse.getStatus()).isEqualTo(400);

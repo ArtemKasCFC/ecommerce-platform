@@ -11,29 +11,33 @@ import java.util.function.Consumer;
 public class ProductSteps {
 
     public static ProductResponse sendDefaultCreateProductRequest() {
+        String adminToken = UserSteps.createAdminToken();
         ProductCreateRequest body = ProductFactory.defaultProduct();
 
-        return ProductApi.createProduct(body, ProductResponse.class, 201);
+        return ProductApi.createProduct(body, adminToken, ProductResponse.class, 201);
     }
 
     public static <T> T sendCreateProductRequest(Consumer<ProductCreateRequest> customizer, Class<T> type, int statusCode) {
+        String adminToken = UserSteps.createAdminToken();
         ProductCreateRequest body = ProductFactory.defaultProduct();
         customizer.accept(body);
 
-        return ProductApi.createProduct(body, type, statusCode);
+        return ProductApi.createProduct(body, adminToken, type, statusCode);
     }
 
     public static ProductResponse sendDefaultUpdateProductRequest() {
+        String adminToken = UserSteps.createAdminToken();
         ProductResponse createdProduct = sendDefaultCreateProductRequest();
         ProductUpdateRequest updateRequestBody = ProductFactory.defaultProductUpdate();
 
-        return ProductApi.updateProduct(updateRequestBody, createdProduct.getId(), ProductResponse.class, 200);
+        return ProductApi.updateProduct(updateRequestBody, adminToken, createdProduct.getId(), ProductResponse.class, 200);
     }
 
     public static ProductResponse sendDefaultDeleteProductRequest() {
+        String adminToken = UserSteps.createAdminToken();
         ProductResponse createdProduct = sendDefaultCreateProductRequest();
-        ProductApi.deleteProductById(createdProduct.getId(), Void.class, 204);
-        
+        ProductApi.deleteProductById(createdProduct.getId(), adminToken, Void.class, 204);
+
         return createdProduct;
     }
 }

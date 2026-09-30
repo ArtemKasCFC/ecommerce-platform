@@ -15,19 +15,26 @@ import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import com.petproject.ecommerce.product.dto.response.ProductResponse;
 import com.petproject.ecommerce.product.entity.Product;
 import com.petproject.ecommerce.steps.ProductSteps;
+import com.petproject.ecommerce.steps.UserSteps;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.petproject.ecommerce.infrastructure.KafkaContainerManager.startKafka;
+import static com.petproject.ecommerce.infrastructure.KafkaContainerManager.stopKafka;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ProductsTests {
 
     private static ProductKafkaTestConsumer kafkaConsumer;
+    private final static String ADMIN_TOKEN = UserSteps.createAdminToken();
+    private final static String USER_TOKEN = UserSteps.createUserToken();
 
     @BeforeAll
     static void setUpConsumer() {
@@ -43,7 +50,7 @@ class ProductsTests {
     void shouldCreateProduct() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
 
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
         assertThat(createdProduct)
                 .usingRecursiveComparison()
                 .ignoringFields("id")
@@ -69,11 +76,22 @@ class ProductsTests {
     }
 
     @Test
-    void shouldNotCreateProductWithoutTitle() {
-        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setTitle(null), ErrorResponse.class, 400);
+    void shouldNotCreateProductWithoutAuthentication() {
+        ProductCreateRequest body = ProductFactory.defaultProduct();
+        ErrorResponse errorResponse = ProductApi.createProduct(body, "", ErrorResponse.class, 401);
 
-        assertThat(errorResponse.getStatus()).isEqualTo(400);
-        assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_REQUIRED);
+        assertThat(errorResponse.getStatus()).isEqualTo(401);
+        assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.AUTH_REQUIRED);
+    }
+
+    @Test
+    void shouldNotCreateProductAsRegularUser() {
+        ProductCreateRequest body = ProductFactory.defaultProduct();
+
+        ErrorResponse errorResponse = ProductApi.createProduct(body, USER_TOKEN, ErrorResponse.class, 403);
+
+        assertThat(errorResponse.getStatus()).isEqualTo(403);
+        assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.ACCESS_DENIED);
     }
 
     @Test
@@ -82,6 +100,14 @@ class ProductsTests {
 
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_TOO_LONG);
+    }
+
+    @Test
+    void shouldNotCreateProductWithoutTitle() {
+        ErrorResponse errorResponse = ProductSteps.sendCreateProductRequest(request -> request.setTitle(null), ErrorResponse.class, 400);
+
+        assertThat(errorResponse.getStatus()).isEqualTo(400);
+        assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_REQUIRED);
     }
 
     @Test
@@ -168,7 +194,7 @@ class ProductsTests {
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
 
-        ProductResponse updatedProduct = ProductApi.updateProduct(updateBody, createdProduct.getId(), ProductResponse.class, 200);
+        ProductResponse updatedProduct = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ProductResponse.class, 200);
 
         assertThat(updatedProduct)
                 .usingRecursiveComparison()
@@ -195,11 +221,34 @@ class ProductsTests {
     }
 
     @Test
+    void shouldNotUpdateProductWithoutAuthentication() {
+        ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
+        ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
+
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, "", createdProduct.getId(), ErrorResponse.class, 401);
+
+
+        assertThat(errorResponse.getStatus()).isEqualTo(401);
+        assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.AUTH_REQUIRED);
+    }
+
+    @Test
+    void shouldNotUpdateProductAsRegularUser() {
+        ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
+        ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
+
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, USER_TOKEN, createdProduct.getId(), ErrorResponse.class, 403);
+
+        assertThat(errorResponse.getStatus()).isEqualTo(403);
+        assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.ACCESS_DENIED);
+    }
+
+    @Test
     void shouldNotUpdateNonExistentProduct() {
         Long nonExistentProductId = Long.MAX_VALUE;
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, nonExistentProductId, ErrorResponse.class, 404);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, nonExistentProductId, ErrorResponse.class, 404);
         assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.PRODUCT_NOT_FOUND.formatted(nonExistentProductId));
         assertThat(errorResponse.getStatus()).isEqualTo(404);
 
@@ -211,7 +260,7 @@ class ProductsTests {
         Long negativeId = -1L;
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, negativeId, ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, negativeId, ErrorResponse.class, 400);
 
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("id", ValidationMessages.ID_MUST_BE_POSITIVE);
@@ -224,7 +273,7 @@ class ProductsTests {
         Long zeroId = 0L;
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, zeroId, ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, zeroId, ErrorResponse.class, 400);
 
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("id", ValidationMessages.ID_MUST_BE_POSITIVE);
@@ -235,12 +284,12 @@ class ProductsTests {
     @Test
     void shouldNotUpdateProductWithoutTitle() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
         updateBody.setTitle(null);
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, createdProduct.getId(), ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ErrorResponse.class, 400);
 
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_REQUIRED);
@@ -256,12 +305,12 @@ class ProductsTests {
     @Test
     void shouldNotUpdateProductWhenTitleExceedsMaxLength() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
         updateBody.setTitle("A".repeat(51));
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, createdProduct.getId(), ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("title", ValidationMessages.TITLE_TOO_LONG);
 
@@ -276,12 +325,12 @@ class ProductsTests {
     @Test
     void shouldNotUpdateProductWithoutPrice() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
         updateBody.setPrice(null);
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, createdProduct.getId(), ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_REQUIRED);
 
@@ -296,12 +345,12 @@ class ProductsTests {
     @Test
     void shouldNotUpdateProductWithNegativePrice() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
         updateBody.setPrice(BigDecimal.valueOf(-1.0));
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, createdProduct.getId(), ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_MUST_BE_POSITIVE);
 
@@ -316,12 +365,12 @@ class ProductsTests {
     @Test
     void shouldNotUpdateProductWithZeroPrice() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
         updateBody.setPrice(BigDecimal.valueOf(0.0));
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, createdProduct.getId(), ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_MUST_BE_POSITIVE);
 
@@ -336,12 +385,12 @@ class ProductsTests {
     @Test
     void shouldNotUpdateProductWhenPriceExceedsMaxValue() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
         ProductUpdateRequest updateBody = ProductFactory.defaultProductUpdate();
         updateBody.setPrice(BigDecimal.valueOf(10000.1));
 
-        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, createdProduct.getId(), ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.updateProduct(updateBody, ADMIN_TOKEN, createdProduct.getId(), ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("price", ValidationMessages.PRICE_TOO_HIGH);
 
@@ -356,9 +405,9 @@ class ProductsTests {
     @Test
     void shouldDeleteProduct() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
-        ProductApi.deleteProductById(createdProduct.getId(), Void.class, 204);
+        ProductApi.deleteProductById(createdProduct.getId(), ADMIN_TOKEN, Void.class, 204);
         assertThat(ProductsDb.existsById(createdProduct.getId())).isFalse();
 
         ProductEvent event = kafkaConsumer
@@ -371,10 +420,30 @@ class ProductsTests {
     }
 
     @Test
+    void shouldNotDeleteProductWithoutAuthentication() {
+        ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
+
+        ErrorResponse errorResponse = ProductApi.deleteProductById(createdProduct.getId(), "", ErrorResponse.class, 401);
+
+        assertThat(errorResponse.getStatus()).isEqualTo(401);
+        assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.AUTH_REQUIRED);
+    }
+
+    @Test
+    void shouldNotDeleteProductAsRegularUser() {
+        ProductResponse createdProduct = ProductSteps.sendDefaultCreateProductRequest();
+
+        ErrorResponse errorResponse = ProductApi.deleteProductById(createdProduct.getId(), USER_TOKEN, ErrorResponse.class, 403);
+
+        assertThat(errorResponse.getStatus()).isEqualTo(403);
+        assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.ACCESS_DENIED);
+    }
+
+    @Test
     void shouldNotDeleteNonExistentProduct() {
         Long nonExistentProductId = Long.MAX_VALUE;
 
-        ErrorResponse errorResponse = ProductApi.deleteProductById(nonExistentProductId, ErrorResponse.class, 404);
+        ErrorResponse errorResponse = ProductApi.deleteProductById(nonExistentProductId, ADMIN_TOKEN, ErrorResponse.class, 404);
         assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.PRODUCT_NOT_FOUND.formatted(nonExistentProductId));
         assertThat(errorResponse.getStatus()).isEqualTo(404);
 
@@ -385,7 +454,7 @@ class ProductsTests {
     void shouldNotDeleteProductWithNegativeId() {
         Long negativeId = -1L;
 
-        ErrorResponse errorResponse = ProductApi.deleteProductById(negativeId, ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.deleteProductById(negativeId, ADMIN_TOKEN, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("id", ValidationMessages.ID_MUST_BE_POSITIVE);
 
@@ -396,7 +465,7 @@ class ProductsTests {
     void shouldNotDeleteProductWithZeroId() {
         Long zeroId = 0L;
 
-        ErrorResponse errorResponse = ProductApi.deleteProductById(zeroId, ErrorResponse.class, 400);
+        ErrorResponse errorResponse = ProductApi.deleteProductById(zeroId, ADMIN_TOKEN, ErrorResponse.class, 400);
         assertThat(errorResponse.getStatus()).isEqualTo(400);
         assertThat(errorResponse.getErrors()).containsEntry("id", ValidationMessages.ID_MUST_BE_POSITIVE);
 
@@ -406,9 +475,9 @@ class ProductsTests {
     @Test
     void shouldNotDeleteProductTwice() {
         ProductCreateRequest body = ProductFactory.defaultProduct();
-        ProductResponse createdProduct = ProductApi.createProduct(body, ProductResponse.class, 201);
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
 
-        ProductApi.deleteProductById(createdProduct.getId(), Void.class, 204);
+        ProductApi.deleteProductById(createdProduct.getId(), ADMIN_TOKEN, Void.class, 204);
 
         ProductEvent event = kafkaConsumer
                 .read(createdProduct.getId(), ProductDeletedEvent.class, ofSeconds(3))
@@ -416,10 +485,32 @@ class ProductsTests {
 
         assertThat(event.getId()).isEqualTo(createdProduct.getId());
 
-        ErrorResponse errorResponse = ProductApi.deleteProductById(createdProduct.getId(), ErrorResponse.class, 404);
+        ErrorResponse errorResponse = ProductApi.deleteProductById(createdProduct.getId(), ADMIN_TOKEN, ErrorResponse.class, 404);
         assertThat(errorResponse.getMessage()).isEqualTo(ValidationMessages.PRODUCT_NOT_FOUND.formatted(createdProduct.getId()));
         assertThat(errorResponse.getStatus()).isEqualTo(404);
 
         assertThat(kafkaConsumer.read(createdProduct.getId(), ProductDeletedEvent.class, ofSeconds(3))).isEmpty();
+    }
+
+    @Test()
+    @Disabled("Will be improved later")
+    void kafkaProducerShouldSendEventAfterRestart() throws IOException, InterruptedException {
+        ProductCreateRequest body = ProductFactory.defaultProduct();
+        ProductResponse createdProduct = ProductApi.createProduct(body, ADMIN_TOKEN, ProductResponse.class, 201);
+
+        stopKafka();
+        ProductApi.deleteProductById(createdProduct.getId(), ADMIN_TOKEN, Void.class, 204);
+        assertThat(ProductsDb.existsById(createdProduct.getId())).isFalse();
+        Thread.sleep(8000);
+        startKafka();
+        Thread.sleep(3000);
+
+        ProductEvent event = kafkaConsumer
+                .read(createdProduct.getId(), ProductDeletedEvent.class, ofSeconds(3))
+                .orElseThrow(() -> new RuntimeException("ProductDeletedEvent was not found"));
+
+        assertThat(event.getId()).isEqualTo(createdProduct.getId());
+
+        ProductApi.getProductById(createdProduct.getId(), ErrorResponse.class, 404);
     }
 }

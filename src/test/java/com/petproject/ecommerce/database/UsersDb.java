@@ -51,4 +51,16 @@ public class UsersDb {
 
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, id));
     }
+
+    public static void updateRoleById(long id, Roles role) {
+
+        String sql = """
+                UPDATE users
+                SET role = ?
+                WHERE id = ?
+                """;
+
+        jdbcTemplate.update(sql, role.name(), id);
+    }
+
 }
