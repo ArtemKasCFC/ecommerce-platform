@@ -63,4 +63,14 @@ public class UsersDb {
         jdbcTemplate.update(sql, role.name(), id);
     }
 
+    public static void updateStatusById(long id, UserStatuses status) {
+
+        String sql = """
+                UPDATE users
+                SET status = ?
+                WHERE id = ?
+                """;
+
+        jdbcTemplate.update(sql, status.name(), id);
+    }
 }

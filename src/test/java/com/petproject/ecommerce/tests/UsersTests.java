@@ -7,6 +7,7 @@ import com.petproject.ecommerce.database.UsersDb;
 import com.petproject.ecommerce.factories.UserFactory;
 import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import com.petproject.ecommerce.user.dto.request.UserCreateRequest;
+import com.petproject.ecommerce.user.dto.response.RegistrationResponse;
 import com.petproject.ecommerce.user.dto.response.UserResponse;
 import com.petproject.ecommerce.user.entity.User;
 import org.junit.jupiter.api.Test;
@@ -26,17 +27,18 @@ public class UsersTests {
     @Test
     void shouldCreateUserWithValidData() {
         UserCreateRequest body = UserFactory.defaultUser();
-        UserResponse createdUser = UserApi.createUser(body, UserResponse.class, 201);
+        RegistrationResponse createdUser = UserApi.createUser(body, RegistrationResponse.class, 201);
 
         UserAssertions.validateUserCreateResponse(createdUser, body);
 
-        User userRecord = UsersDb.findById(createdUser.getId());
-        assertThat(createdUser)
+        User userRecord = UsersDb.findById(createdUser.getUser().getId());
+
+        assertThat(createdUser.getUser())
                 .usingRecursiveComparison()
                 .ignoringFields("createdAt")
                 .isEqualTo(userRecord);
 
-        assertThat(createdUser.getCreatedAt())
+        assertThat(createdUser.getUser().getCreatedAt())
                 .isCloseTo(userRecord.getCreatedAt(), within(1, ChronoUnit.MICROS));
 
         assertThat(userRecord.getPassword())
