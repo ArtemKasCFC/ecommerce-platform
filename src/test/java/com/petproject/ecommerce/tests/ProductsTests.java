@@ -33,8 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ProductsTests {
 
     private static ProductKafkaTestConsumer kafkaConsumer;
-    private final static String ADMIN_TOKEN = UserSteps.createAdminToken();
-    private final static String USER_TOKEN = UserSteps.createUserToken();
+    private final static String ADMIN_TOKEN = UserSteps.createAdmin().get("token");
+    private final static String USER_TOKEN = UserSteps.createUser().get("token");
 
     @BeforeAll
     static void setUpConsumer() {

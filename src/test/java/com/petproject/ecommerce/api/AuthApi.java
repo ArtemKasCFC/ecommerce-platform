@@ -22,4 +22,24 @@ public class AuthApi {
                 .response()
                 .as(type);
     }
+
+
+    public static <T> T logout(String token, Class<T> type, int sc) {
+        var response = given(RequestSpecs.defaultSpec())
+                .auth().oauth2(token)
+                .log().all()
+                .when()
+                .post(AuthEndpoints.LOGOUT)
+                .then()
+                .log().all()
+                .statusCode(sc)
+                .extract()
+                .response();
+
+        if (type == Void.class) {
+            return null;
+        }
+
+        return response.as(type);
+    }
 }

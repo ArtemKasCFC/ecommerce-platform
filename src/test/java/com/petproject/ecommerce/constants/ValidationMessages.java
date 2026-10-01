@@ -5,6 +5,8 @@ public final class ValidationMessages {
     // Auth
     public static final String AUTH_REQUIRED = "Authentication required";
     public static final String ACCESS_DENIED = "Access denied";
+    public static final String INVALID_CREDENTIALS = "Invalid email or password";
+    public static final String INVALID_TOKEN = "Invalid or expired token";
 
     // Users
     public static final String NAME_REQUIRED = "Request must contain name";
