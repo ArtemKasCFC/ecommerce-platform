@@ -4,10 +4,13 @@ pipeline {
     environment {
         POSTGRES_HOST = 'localhost'
         POSTGRES_PORT = '5432'
+        VITE_API_URL = 'http://localhost:8080'
         POSTGRES_DB = credentials('postgres-db')
         POSTGRES_USER = credentials('postgres-user')
         POSTGRES_PASSWORD = credentials('postgres-password')
         LOCALSTACK_AUTH_TOKEN = credentials('localstack-auth-token')
+        SPLUNK_PASSWORD = credentials('splunk-password')
+        SECRET_KEY = credentials('secret-key')
     }
 
     stages {
@@ -22,6 +25,8 @@ pipeline {
                         echo POSTGRES_HOST=localhost
                         echo POSTGRES_PORT=5432
                         echo LOCALSTACK_AUTH_TOKEN=%LOCALSTACK_AUTH_TOKEN%
+                        echo SPLUNK_PASSWORD=%SPLUNK_PASSWORD%
+                        echo SECRET_KEY=%SECRET_KEY%
                     ) > .env
                 '''
             }
@@ -38,6 +43,7 @@ pipeline {
                         echo db.username=%POSTGRES_USER%
                         echo db.password=%POSTGRES_PASSWORD%
                         echo kafka.bootstrap.servers=localhost:9092
+                        echo jwt.secret=%SECRET_KEY%
                     ) > "src\\test\\resources\\test.properties"
                 '''
             }
@@ -69,11 +75,29 @@ pipeline {
             }
         }
 
+        stage('Start frontend') {
+            steps {
+                bat '''
+                    cd frontend
+                    start "" npm run dev
+                '''
+            }
+        }
+
         stage('Run tests') {
             steps {
                 bat '.\\mvnw.cmd clean test'
             }
         }
+
+         stage('Run Cypress tests') {
+             steps {
+                 dir('frontend') {
+                     bat 'npm ci'
+                     bat 'npx cypress run'
+                 }
+             }
+         }
     }
 
     post {
