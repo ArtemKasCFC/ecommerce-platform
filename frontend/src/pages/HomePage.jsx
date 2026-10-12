@@ -1,5 +1,4 @@
 import {useEffect} from "react";
-import {Link} from "react-router-dom";
 
 function HomePage() {
     useEffect(() => {
@@ -21,13 +20,6 @@ function HomePage() {
                     <p className="neon-text">
                         Welcome to the ecommerce platform.
                     </p>
-
-                    <Link
-                        to="/register"
-                        className="btn btn-neon"
-                    >
-                        Create account
-                    </Link>
                 </div>
             </div>
         </main>

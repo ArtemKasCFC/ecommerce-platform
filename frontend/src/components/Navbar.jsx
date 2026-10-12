@@ -1,6 +1,10 @@
 import {NavLink} from "react-router-dom";
+import {useContext} from "react";
+import AuthContext from "../context/AuthContext.jsx";
 
 function Navbar() {
+    const {isAuthenticated, logout} = useContext(AuthContext);
+
     return (
         <nav className="navbar navbar-expand">
             <div className="container">
@@ -20,12 +24,31 @@ function Navbar() {
                         Home
                     </NavLink>
 
-                    <NavLink
-                        to="/register"
-                        className="nav-link neon-nav-link"
-                    >
-                        Register
-                    </NavLink>
+                    {isAuthenticated ? (
+                        <button
+                            type="button"
+                            className="nav-link neon-nav-link"
+                            onClick={logout}
+                        >
+                            Logout
+                        </button>
+                    ) : (
+                        <>
+                            <NavLink
+                                to="/login"
+                                className="nav-link neon-nav-link"
+                            >
+                                Login
+                            </NavLink>
+
+                            <NavLink
+                                to="/register"
+                                className="nav-link neon-nav-link"
+                            >
+                                Register
+                            </NavLink>
+                        </>
+                    )}
                 </div>
 
             </div>
