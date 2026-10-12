@@ -1,9 +1,12 @@
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {createUser} from "../api/usersApi.js";
 import RegistrationForm from "../components/RegistrationForm.jsx";
+import AuthContext from "../context/AuthContext.jsx";
 
 function RegistrationPage() {
+    const {login} = useContext(AuthContext);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -32,7 +35,7 @@ function RegistrationPage() {
             newErrors.email = "Invalid email";
         }
 
-        if (!password) {
+        if (!password.trim()) {
             newErrors.password = "Password is required";
         } else if (password.length < 8 || password.length > 64) {
             newErrors.password =
@@ -117,6 +120,9 @@ function RegistrationPage() {
                 return;
             }
 
+            const token = data.token;
+            login(token);
+
             navigate("/");
 
         } catch (error) {
@@ -132,34 +138,28 @@ function RegistrationPage() {
 
     return (
         <main className="container page-container">
-            <div className="registration-wrapper">
 
-                <div className="neon-card">
-                    <p className="retro-label">
-                        USER REGISTRATION
-                    </p>
+            <div className="neon-card">
+                <p className="retro-label">
+                    USER REGISTRATION
+                </p>
 
-                    <h1 className="neon-title">
-                        Create account
-                    </h1>
+                <h1 className="neon-title">
+                    Create account
+                </h1>
 
-                    <p className="neon-text">
-                        Join the platform and start shopping.
-                    </p>
-
-                    <RegistrationForm
-                        name={name}
-                        email={email}
-                        password={password}
-                        errors={errors}
-                        serverError={serverError}
-                        isSubmitting={isSubmitting}
-                        onChange={handleChange}
-                        onSubmit={handleSubmit}
-                    />
-                </div>
-
+                <RegistrationForm
+                    name={name}
+                    email={email}
+                    password={password}
+                    errors={errors}
+                    serverError={serverError}
+                    isSubmitting={isSubmitting}
+                    onChange={handleChange}
+                    onSubmit={handleSubmit}
+                />
             </div>
+
         </main>
     );
 }
