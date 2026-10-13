@@ -4,6 +4,7 @@ import RegistrationPage from "./pages/RegistrationPage.jsx";
 import Navbar from "./components/Navbar.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import {AuthProvider} from "./context/AuthContext.jsx";
+import GuestRoute from "./routes/GuestRoute.jsx"
 
 function App() {
     return (
@@ -12,8 +13,11 @@ function App() {
 
             <Routes>
                 <Route path="/" element={<HomePage/>}/>
-                <Route path="/register" element={<RegistrationPage/>}/>
-                <Route path="/login" element={<LoginPage/>}/>
+
+                <Route element={<GuestRoute/>}>
+                    <Route path="/login" element={<LoginPage/>}/>
+                    <Route path="/register" element={<RegistrationPage/>}/>
+                </Route>
             </Routes>
         </AuthProvider>
     );
