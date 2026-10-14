@@ -1,4 +1,9 @@
 export const VALIDATION_MESSAGES = {
+    AUTH_REQUIRED: 'Authentication required',
+    ACCESS_DENIED: 'Access denied',
+    INVALID_CREDENTIALS: 'Invalid email or password',
+    INVALID_TOKEN: 'Invalid or expired token',
+
     NAME_REQUIRED: 'Name is required',
     NAME_TOO_LONG: 'Name must not exceed 100 characters',
 
