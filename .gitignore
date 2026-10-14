@@ -87,6 +87,7 @@ Thumbs.db
 
 .env
 frontend/.env
+frontend/cypress.env.json
 
 # =========================
 # Allure

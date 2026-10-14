@@ -5,24 +5,22 @@ class RegistrationPage {
     }
 
     fillInName(name) {
-        cy.get("#name").type(name);
+        if (name !== '') cy.get("#name").type(name);
     }
-
 
     fillInEmail(email) {
-        cy.get("#email").type(email);
+        if (email !== '') cy.get("#email").type(email);
     }
 
-
     fillInPassword(password) {
-        cy.get("#password").type(password);
+        if (password !== '') cy.get("#password").type(password);
     }
 
     clickCreateAccountBtn() {
         cy.get('button[type="submit"]').click();
     }
 
-    fillInRegisterForm({name, email, password}) {
+    register({name, email, password}) {
         this.fillInName(name);
         this.fillInEmail(email);
         this.fillInPassword(password);
@@ -30,8 +28,9 @@ class RegistrationPage {
         this.clickCreateAccountBtn();
     }
 
-    getError(field) {
-        return cy.get(`#${field} ~ .invalid-feedback`);
+    validateFieldError(field, message) {
+        cy.get(`#${field} ~ .invalid-feedback`).should('be.visible').and('have.text', message);
+        cy.get(`#${field}`).should("have.class", 'is-invalid');
     }
 }
 
