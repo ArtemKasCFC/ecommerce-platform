@@ -2,91 +2,114 @@ import RegistrationPage from "../pages/registrationPage.js";
 import {defaultUser} from "../factories/userFactory.js";
 import {ROUTES} from "../constants/routes.js";
 import {VALIDATION_MESSAGES} from "../constants/validationMessages.js";
+import Navbar from "../pages/navbar.js";
 
 const registrationPage = new RegistrationPage();
+const navbar = new Navbar();
 
 describe('Registration', () => {
+    let user;
+
+    beforeEach(() => {
+        user = defaultUser();
+        registrationPage.visit();
+    })
 
     it('should register a user with valid data', () => {
-        const user = defaultUser();
+        cy.intercept('POST', '**/users').as('registerRequest');
 
-        registrationPage.visit();
-        registrationPage.fillInRegisterForm(user);
+        registrationPage.register(user);
+
+        cy.wait('@registerRequest').then(interception => {
+            expect(interception.response.statusCode).eq(201);
+            expect(interception.response.body).to.have.property('token').that.is.a('string').and.not.empty;
+        });
+
+        cy.window().its('localStorage').invoke('getItem', 'token')
+            .should('be.a', 'string')
+            .and("not.be.empty");
+
         cy.location('pathname').should('eq', ROUTES.HOME);
+
+        navbar.validateAuthState(true);
     });
 
     it('should not register a user with empty name', () => {
-        const user = defaultUser();
-        user.name = ' ';
+        user.name = '';
+        registrationPage.register(user);
+        registrationPage.validateFieldError('name', VALIDATION_MESSAGES.NAME_REQUIRED);
 
-        registrationPage.visit();
-        registrationPage.fillInRegisterForm(user);
+        cy.location('pathname').should('eq', ROUTES.REGISTER);
 
-        registrationPage.getError('name').should('be.visible').and('have.text', VALIDATION_MESSAGES.NAME_REQUIRED);
-        cy.get('#name').should("have.class", 'is-invalid');
+        navbar.validateAuthState(false);
     });
 
     it('should not register a user with a name exceeding 100 characters', () => {
-        const user = defaultUser();
         user.name = 'A'.repeat(101);
+        registrationPage.register(user);
+        registrationPage.validateFieldError('name', VALIDATION_MESSAGES.NAME_TOO_LONG);
 
-        registrationPage.visit();
-        registrationPage.fillInRegisterForm(user);
+        cy.location('pathname').should('eq', ROUTES.REGISTER);
 
-        registrationPage.getError('name').should('be.visible').and('have.text', VALIDATION_MESSAGES.NAME_TOO_LONG);
-        cy.get('#name').should("have.class", 'is-invalid');
+        navbar.validateAuthState(false);
     });
 
     it('should not register a user with empty email', () => {
-        const user = defaultUser();
-        user.email = ' ';
+        user.email = '';
+        registrationPage.register(user);
+        registrationPage.validateFieldError('email', VALIDATION_MESSAGES.EMAIL_REQUIRED);
 
-        registrationPage.visit();
-        registrationPage.fillInRegisterForm(user);
+        cy.location('pathname').should('eq', ROUTES.REGISTER);
 
-        registrationPage.getError('email').should('be.visible').and('have.text', VALIDATION_MESSAGES.EMAIL_REQUIRED);
-        cy.get('#email').should("have.class", 'is-invalid');
+        navbar.validateAuthState(false);
     });
 
     it('should not register a user with a duplicate email', () => {
-        const user = defaultUser();
+        registrationPage.register(user);
 
-        registrationPage.visit();
-        registrationPage.fillInRegisterForm(user);
+        cy.contains('button', 'Logout').click();
+        cy.contains('a', 'Register').click();
 
-        cy.contains('a', 'Create account').click();
-        registrationPage.fillInRegisterForm(user);
+        cy.intercept('POST', '**/users').as('registerRequest');
 
-        registrationPage.getError('email').should('be.visible').and('have.text', VALIDATION_MESSAGES.EMAIL_ALREADY_EXISTS);
-        cy.get('#email').should("have.class", 'is-invalid');
+        registrationPage.register(user);
+
+        cy.wait('@registerRequest').then(interception => {
+            expect(interception.response.statusCode).eq(409);
+            expect(interception.response.body).to.have.property('status').eq(409);
+            expect(interception.response.body).to.have.property('message').eq(VALIDATION_MESSAGES.EMAIL_ALREADY_EXISTS);
+        });
+
+        registrationPage.validateFieldError('email', VALIDATION_MESSAGES.EMAIL_ALREADY_EXISTS);
+
+        cy.location('pathname').should('eq', ROUTES.REGISTER);
+
+        navbar.validateAuthState(false);
     });
 
     ["invalid-email", "test@", "@gmail.com", "test@gmail", "test@gmail."].forEach(email => {
         it(`should not register a user with an invalid email format: ${email}`, () => {
-            const user = defaultUser();
             user.email = email;
+            registrationPage.register(user);
 
-            registrationPage.visit();
-            registrationPage.fillInRegisterForm(user);
+            registrationPage.validateFieldError('email', VALIDATION_MESSAGES.EMAIL_INVALID);
 
-            registrationPage.getError('email').should('be.visible').and('have.text', VALIDATION_MESSAGES.EMAIL_INVALID);
-            cy.get('#email').should("have.class", 'is-invalid');
+            cy.location('pathname').should('eq', ROUTES.REGISTER);
+
+            navbar.validateAuthState(false);
         });
     })
 
 
     it('should not register a user with empty password', () => {
-        const user = defaultUser();
+        user.password = '';
+        registrationPage.register(user);
 
-        registrationPage.visit();
-        registrationPage.fillInName(user.name);
-        registrationPage.fillInEmail(user.email);
+        registrationPage.validateFieldError('password', VALIDATION_MESSAGES.PASSWORD_REQUIRED);
 
-        registrationPage.clickCreateAccountBtn();
+        cy.location('pathname').should('eq', ROUTES.REGISTER);
 
-        registrationPage.getError('password').should('be.visible').and('have.text', VALIDATION_MESSAGES.PASSWORD_REQUIRED);
-        cy.get('#password').should("have.class", 'is-invalid');
-
+        navbar.validateAuthState(false);
     });
 
     [
@@ -97,47 +120,55 @@ describe('Registration', () => {
         {password: 'Pass!!!!', message: VALIDATION_MESSAGES.PASSWORD_DIGIT_REQUIRED},
         {password: 'Pass1234', message: VALIDATION_MESSAGES.PASSWORD_SPEC_CHAR_REQUIRED}
     ].forEach(({password, message}) => {
-        it(`should not register a user with an invalid password || message: ${message}`, () => {
-            const user = defaultUser();
+        it(`should not register a user with an invalid password: ${message}`, () => {
             user.password = password;
+            registrationPage.register(user);
 
-            registrationPage.visit();
-            registrationPage.fillInRegisterForm(user);
+            registrationPage.validateFieldError('password', message);
 
-            registrationPage.getError('password').should('be.visible').and('have.text', message);
-            cy.get('#password').should("have.class", 'is-invalid');
+            cy.location('pathname').should('eq', ROUTES.REGISTER);
+
+            navbar.validateAuthState(false);
         });
     })
 
     it('should clear validation errors when correcting fields', () => {
-        registrationPage.visit();
         registrationPage.clickCreateAccountBtn();
 
-        registrationPage.getError('name').should('be.visible').and('have.text', VALIDATION_MESSAGES.NAME_REQUIRED);
-        cy.get('#name').should("have.class", 'is-invalid');
-        registrationPage.getError('email').should('be.visible').and('have.text', VALIDATION_MESSAGES.EMAIL_REQUIRED);
-        cy.get('#email').should("have.class", 'is-invalid');
-        registrationPage.getError('password').should('be.visible').and('have.text', VALIDATION_MESSAGES.PASSWORD_REQUIRED);
-        cy.get('#password').should("have.class", 'is-invalid');
+        registrationPage.validateFieldError('name', VALIDATION_MESSAGES.NAME_REQUIRED);
+        registrationPage.validateFieldError('email', VALIDATION_MESSAGES.EMAIL_REQUIRED);
+        registrationPage.validateFieldError('password', VALIDATION_MESSAGES.PASSWORD_REQUIRED);
 
-        const user = defaultUser();
+        cy.intercept('POST', '**/users').as('registerRequest');
 
         registrationPage.fillInName(user.name);
-        registrationPage.getError('name').should('not.exist');
+        cy.get('#name ~ .invalid-feedback').should('not.exist');
         cy.get('#name').should("not.have.class", 'is-invalid');
 
 
         registrationPage.fillInEmail(user.email);
-        registrationPage.getError('email').should('not.exist');
+        cy.get('#email ~ .invalid-feedback').should('not.exist');
         cy.get('#email').should("not.have.class", 'is-invalid');
 
 
         registrationPage.fillInPassword(user.password);
-        registrationPage.getError('password').should('not.exist');
+        cy.get('#password ~ .invalid-feedback').should('not.exist');
         cy.get('#password').should("not.have.class", 'is-invalid');
 
         registrationPage.clickCreateAccountBtn();
 
+
+        cy.wait('@registerRequest').then(interception => {
+            expect(interception.response.statusCode).eq(201);
+            expect(interception.response.body).to.have.property('token').that.is.a('string').and.not.empty;
+        });
+
+        cy.window().its('localStorage').invoke('getItem', 'token')
+            .should('be.a', 'string')
+            .and("not.be.empty");
+
         cy.location('pathname').should('eq', ROUTES.HOME);
+
+        navbar.validateAuthState(true);
     });
 });
