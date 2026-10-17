@@ -12,7 +12,9 @@ describe('Login and Logout', () => {
         loginPage.visit();
     })
 
-    it('should log in a user with valid credentials', () => {
+    it('should log in with valid credentials as a user', () => {
+        let token;
+
         cy.intercept('POST', '**/auth/login').as('loginRequest');
         cy.env(['userEmail', 'userPassword']).then(
             ({userEmail, userPassword}) => {
@@ -23,18 +25,20 @@ describe('Login and Logout', () => {
         cy.wait('@loginRequest').then(interception => {
             expect(interception.response.statusCode).eq(200);
             expect(interception.response.body).to.have.property('token').that.is.a('string').and.not.empty;
+
+            token = interception.response.body.token;
         });
 
-        cy.window().its('localStorage').invoke('getItem', 'token')
-            .should('be.a', 'string')
-            .and("not.be.empty");
+        cy.window().then(win => expect(win.localStorage.getItem("token")).eq(token));
 
         cy.location('pathname').should('eq', ROUTES.HOME);
 
         navbar.validateAuthState(true);
     });
 
-    it('should log in an admin with valid credentials', () => {
+    it('should log in with valid credentials as an admin', () => {
+        let token;
+
         cy.intercept('POST', '**/auth/login').as('loginRequest');
         cy.env(['adminEmail', 'adminPassword']).then(
             ({adminEmail, adminPassword}) => {
@@ -45,18 +49,18 @@ describe('Login and Logout', () => {
         cy.wait('@loginRequest').then(interception => {
             expect(interception.response.statusCode).eq(200);
             expect(interception.response.body).to.have.property('token').that.is.a('string').and.not.empty;
+
+            token = interception.response.body.token;
         });
 
-        cy.window().its('localStorage').invoke('getItem', 'token')
-            .should('be.a', 'string')
-            .and("not.be.empty");
+        cy.window().then(win => expect(win.localStorage.getItem("token")).eq(token));
 
         cy.location('pathname').should('eq', ROUTES.HOME);
 
         navbar.validateAuthState(true);
     });
 
-    it('should not log in a user with an incorrect password', () => {
+    it('should not log in with an incorrect password', () => {
         cy.intercept('POST', '**/auth/login').as('loginRequest');
         cy.env(['userEmail']).then(
             ({userEmail}) => {
@@ -80,7 +84,7 @@ describe('Login and Logout', () => {
     });
 
 
-    it('should not log in a user with a non-existing email', () => {
+    it('should not log in with a non-existing email', () => {
         cy.intercept('POST', '**/auth/login').as('loginRequest');
         cy.env(['userPassword']).then(
             ({userPassword}) => {
@@ -104,7 +108,7 @@ describe('Login and Logout', () => {
     });
 
 
-    it('should not log in a disabled user', () => {
+    it('should not log in as a disabled user', () => {
         cy.intercept('POST', '**/auth/login').as('loginRequest');
         cy.env(['disabledUserEmail', 'disabledUserPassword']).then(
             ({disabledUserEmail, disabledUserPassword}) => {
@@ -128,7 +132,7 @@ describe('Login and Logout', () => {
     });
 
 
-    it('should not log in a user with an empty email', () => {
+    it('should not log in with an empty email', () => {
         cy.env(['userPassword']).then(
             ({userPassword}) => {
                 loginPage.login('', userPassword)
@@ -142,7 +146,7 @@ describe('Login and Logout', () => {
         navbar.validateAuthState(false);
     });
 
-    it('should not log in a user with an empty password', () => {
+    it('should not log in with an empty password', () => {
         cy.env(['userEmail']).then(
             ({userEmail}) => {
                 loginPage.login(userEmail, '')
@@ -157,7 +161,7 @@ describe('Login and Logout', () => {
     });
 
     ["invalid-email", "test@", "@gmail.com", "test@gmail", "test@gmail."].forEach(userEmail => {
-        it(`should not log in a user with an invalid email format: ${userEmail}`, () => {
+        it(`should not log in with an invalid email format: ${userEmail}`, () => {
             cy.env(['userPassword']).then(
                 ({userPassword}) => {
                     loginPage.login(userEmail, userPassword)
@@ -172,7 +176,7 @@ describe('Login and Logout', () => {
         });
     });
 
-    it('should log out an authenticated user', () => {
+    it('should log out as an authenticated user', () => {
         cy.intercept('POST', '**/auth/logout').as('logoutRequest');
         cy.env(['userEmail', 'userPassword']).then(
             ({userEmail, userPassword}) => {
