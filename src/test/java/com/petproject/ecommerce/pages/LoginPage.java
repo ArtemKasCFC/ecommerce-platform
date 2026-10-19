@@ -45,8 +45,8 @@ public class LoginPage {
         String textError = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#%s ~ .invalid-feedback".formatted(field)))).getText();
         assertThat(textError).isEqualTo(message);
 
-        WebElement errorIcon = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#%s".formatted(field))));
-        assertThat(errorIcon.getAttribute("class")).contains("is-invalid");
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#%s".formatted(field))));
+        assertThat(input.getAttribute("class")).contains("is-invalid");
     }
 
     public void validateFormError(String message) {

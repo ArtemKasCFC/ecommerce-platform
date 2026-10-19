@@ -1,11 +1,13 @@
 package com.petproject.ecommerce.tests.ui;
 
 import com.petproject.ecommerce.constants.Pages;
+import com.petproject.ecommerce.constants.UserEnpoints;
 import com.petproject.ecommerce.constants.ValidationMessages;
 import com.petproject.ecommerce.factories.UserFactory;
+import com.petproject.ecommerce.pages.Navbar;
 import com.petproject.ecommerce.pages.RegistrationPage;
 import com.petproject.ecommerce.user.dto.request.UserCreateRequest;
-import com.petproject.ecommerce.utils.WaitUtils;
+import com.petproject.ecommerce.utils.NetworkUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,8 +17,14 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.bidi.module.Network;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,79 +32,114 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UsersTests {
 
     private WebDriver driver;
+    private WebDriverWait wait;
+    private Network network;
     private RegistrationPage registrationPage;
-    private WaitUtils waitUtils;
+    private Navbar navbar;
 
     @BeforeEach
     void setUp() {
-        driver = new ChromeDriver();
-        waitUtils = new WaitUtils(driver);
-        registrationPage = new RegistrationPage(driver, waitUtils);
+        ChromeOptions options = new ChromeOptions();
+        options.setCapability("webSocketUrl", true);
+
+        driver = new ChromeDriver(options);
+        network = new Network(driver);
+        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        registrationPage = new RegistrationPage(driver, wait);
+        navbar = new Navbar(wait);
+
+        registrationPage.visit();
     }
 
     @AfterEach
     void quit() {
-        driver.quit();
+        if (driver != null) {
+            driver.quit();
+        }
     }
 
     @Test
     void shouldRegisterUserWithValidData() {
         UserCreateRequest request = UserFactory.defaultUser();
-        registrationPage.open().register(request);
 
-        waitUtils.waitUrl(Pages.MAIN_PAGE);
+        CompletableFuture<Integer> responseStatusFuture = NetworkUtils.listenForResponseStatus(network, "POST", UserEnpoints.USERS);
 
-        assertThat(driver.getCurrentUrl()).isEqualTo(Pages.MAIN_PAGE);
+        registrationPage.register(request);
+
+        int loginStatusCode = NetworkUtils.awaitResponseStatus(responseStatusFuture);
+        assertThat(loginStatusCode).isEqualTo(201);
+
+        String token = NetworkUtils.getToken(driver);
+        assertThat(token).isNotBlank();
+
+        wait.until(ExpectedConditions.urlToBe(Pages.MAIN_PAGE));
+        navbar.validateAuthState(true);
     }
 
     @Test
     void shouldNotRegisterUserWithEmptyName() {
         UserCreateRequest request = UserFactory.defaultUser();
-        request.setName("");
-        registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_REQUIRED_UI);
+        registrationPage.fillInEmail(request.getEmail());
+        registrationPage.fillInPassword(request.getPassword());
+        registrationPage.clickLoginBtn();
+        registrationPage.validateFieldError("name", ValidationMessages.NAME_REQUIRED_UI);
 
-        assertThat(registrationPage.getInvalidField("#name").isDisplayed()).isTrue();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     @Test
     void shouldNotRegisterUserWithNameExceeding100Characters() {
         UserCreateRequest request = UserFactory.defaultUser();
         request.setName("A".repeat(101));
-        registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_TOO_LONG_UI);
+        registrationPage.register(request);
+        registrationPage.validateFieldError("name", ValidationMessages.NAME_TOO_LONG_UI);
 
-        assertThat(registrationPage.getInvalidField("#name").isDisplayed()).isTrue();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     @Test
     void shouldNotRegisterUserWithEmptyEmail() {
         UserCreateRequest request = UserFactory.defaultUser();
-        request.setEmail("");
-        registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_REQUIRED_UI);
+        registrationPage.fillInName(request.getName());
+        registrationPage.fillInPassword(request.getPassword());
+        registrationPage.clickLoginBtn();
+        registrationPage.validateFieldError("email", ValidationMessages.EMAIL_REQUIRED_UI);
 
-        assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     @Test
     void shouldNotRegisterUserWithDuplicateEmail() {
         UserCreateRequest request = UserFactory.defaultUser();
-        registrationPage.open().register(request);
 
-        waitUtils.waitUrl(Pages.MAIN_PAGE);
+        registrationPage.register(request);
+        wait.until(ExpectedConditions.urlToBe(Pages.MAIN_PAGE));
 
-        driver.findElement(By.linkText("Register")).click();
-        waitUtils.waitUrl(Pages.REGISTRATION_PAGE);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[normalize-space()='Logout']"))).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("a[href='/register']"))).click();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+
+        CompletableFuture<Integer> responseStatusFuture = NetworkUtils.listenForResponseStatus(network, "POST", UserEnpoints.USERS);
 
         registrationPage.register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_ALREADY_EXISTS_UI);
+        int loginStatusCode = NetworkUtils.awaitResponseStatus(responseStatusFuture);
+        assertThat(loginStatusCode).isEqualTo(409);
 
-        assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
+        String token = NetworkUtils.getToken(driver);
+        assertThat(token).isNull();
+
+        registrationPage.validateFieldError("email", ValidationMessages.EMAIL_ALREADY_EXISTS_UI);
+
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     @ParameterizedTest
@@ -110,22 +153,24 @@ public class UsersTests {
     void shouldNotRegisterUserWithInvalidEmailFormat(String email) {
         UserCreateRequest request = UserFactory.defaultUser();
         request.setEmail(email);
-        registrationPage.open().register(request);
+        registrationPage.register(request);
+        registrationPage.validateFieldError("email", ValidationMessages.EMAIL_INVALID_UI);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_INVALID_UI);
-
-        assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     @Test
     void shouldNotRegisterUserWithEmptyPassword() {
         UserCreateRequest request = UserFactory.defaultUser();
-        request.setPassword("");
-        registrationPage.open().register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(ValidationMessages.PASSWORD_REQUIRED_UI);
+        registrationPage.fillInName(request.getName());
+        registrationPage.fillInEmail(request.getEmail());
+        registrationPage.clickLoginBtn();
+        registrationPage.validateFieldError("password", ValidationMessages.PASSWORD_REQUIRED_UI);
 
-        assertThat(registrationPage.getInvalidField("#password").isDisplayed()).isTrue();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     @ParameterizedTest
@@ -133,11 +178,12 @@ public class UsersTests {
     void shouldNotRegisterUserWithInvalidPassword(String password, String errorMessage) {
         UserCreateRequest request = UserFactory.defaultUser();
         request.setPassword(password);
-        registrationPage.open().register(request);
+        registrationPage.register(request);
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(errorMessage);
+        registrationPage.validateFieldError("password", errorMessage);
 
-        assertThat(registrationPage.getInvalidField("#password").isDisplayed()).isTrue();
+        wait.until(ExpectedConditions.urlToBe(Pages.REGISTRATION_PAGE));
+        navbar.validateAuthState(false);
     }
 
     static Stream<Arguments> invalidPasswords() {
@@ -153,33 +199,34 @@ public class UsersTests {
 
     @Test
     void shouldClearValidationErrorsWhenCorrectingFields() {
-        registrationPage.open();
-        driver.findElement(RegistrationPage.CREATE_ACCOUNT_BTN).click();
+        registrationPage.clickLoginBtn();
 
-        assertThat(registrationPage.getErrorText(RegistrationPage.NAME_ERROR)).isEqualTo(ValidationMessages.NAME_REQUIRED_UI);
-        assertThat(registrationPage.getInvalidField("#name").isDisplayed()).isTrue();
-        assertThat(registrationPage.getErrorText(RegistrationPage.EMAIL_ERROR)).isEqualTo(ValidationMessages.EMAIL_REQUIRED_UI);
-        assertThat(registrationPage.getInvalidField("#email").isDisplayed()).isTrue();
-        assertThat(registrationPage.getErrorText(RegistrationPage.PASSWORD_ERROR)).isEqualTo(ValidationMessages.PASSWORD_REQUIRED_UI);
-        assertThat(registrationPage.getInvalidField("#password").isDisplayed()).isTrue();
+        registrationPage.validateFieldError("name", ValidationMessages.NAME_REQUIRED_UI);
+        registrationPage.validateFieldError("email", ValidationMessages.EMAIL_REQUIRED_UI);
+        registrationPage.validateFieldError("password", ValidationMessages.PASSWORD_REQUIRED_UI);
 
         UserCreateRequest request = UserFactory.defaultUser();
 
-        driver.findElement(RegistrationPage.NAME_FIELD).sendKeys(request.getName());
-        assertThat(driver.findElements(RegistrationPage.NAME_ERROR)).isEmpty();
-        assertThat(driver.findElements(By.cssSelector("#name" + RegistrationPage.CLASS_OF_IS_INVALID_ICON))).isEmpty();
+        registrationPage.fillInName(request.getName());
+        registrationPage.validateFieldErrorIsNotDisplayed("name");
 
-        driver.findElement(RegistrationPage.EMAIL_FIELD).sendKeys(request.getEmail());
-        assertThat(driver.findElements(RegistrationPage.EMAIL_ERROR)).isEmpty();
-        assertThat(driver.findElements(By.cssSelector("#email" + RegistrationPage.CLASS_OF_IS_INVALID_ICON))).isEmpty();
+        registrationPage.fillInEmail(request.getEmail());
+        registrationPage.validateFieldErrorIsNotDisplayed("email");
 
-        driver.findElement(RegistrationPage.PASSWORD_FIELD).sendKeys(request.getPassword());
-        assertThat(driver.findElements(RegistrationPage.PASSWORD_ERROR)).isEmpty();
-        assertThat(driver.findElements(By.cssSelector("#password" + RegistrationPage.CLASS_OF_IS_INVALID_ICON))).isEmpty();
+        registrationPage.fillInPassword(request.getPassword());
+        registrationPage.validateFieldErrorIsNotDisplayed("password");
 
-        driver.findElement(RegistrationPage.CREATE_ACCOUNT_BTN).click();
+        CompletableFuture<Integer> responseStatusFuture = NetworkUtils.listenForResponseStatus(network, "POST", UserEnpoints.USERS);
 
-        waitUtils.waitUrl(Pages.MAIN_PAGE);
-        assertThat(driver.getCurrentUrl()).isEqualTo(Pages.MAIN_PAGE);
+        registrationPage.clickLoginBtn();
+
+        int loginStatusCode = NetworkUtils.awaitResponseStatus(responseStatusFuture);
+        assertThat(loginStatusCode).isEqualTo(201);
+
+        String token = NetworkUtils.getToken(driver);
+        assertThat(token).isNotBlank();
+
+        wait.until(ExpectedConditions.urlToBe(Pages.MAIN_PAGE));
+        navbar.validateAuthState(true);
     }
 }

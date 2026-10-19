@@ -16,6 +16,7 @@ describe('Registration', () => {
     })
 
     it('should register a user with valid data', () => {
+        let token;
         cy.intercept('POST', '**/users').as('registerRequest');
 
         registrationPage.register(user);
@@ -23,11 +24,11 @@ describe('Registration', () => {
         cy.wait('@registerRequest').then(interception => {
             expect(interception.response.statusCode).eq(201);
             expect(interception.response.body).to.have.property('token').that.is.a('string').and.not.empty;
+
+            token = interception.response.body.token;
         });
 
-        cy.window().its('localStorage').invoke('getItem', 'token')
-            .should('be.a', 'string')
-            .and("not.be.empty");
+        cy.window().then(win => expect(win.localStorage.getItem("token")).eq(token));
 
         cy.location('pathname').should('eq', ROUTES.HOME);
 

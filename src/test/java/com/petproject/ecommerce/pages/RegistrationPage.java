@@ -2,50 +2,64 @@ package com.petproject.ecommerce.pages;
 
 import com.petproject.ecommerce.constants.Pages;
 import com.petproject.ecommerce.user.dto.request.UserCreateRequest;
-import com.petproject.ecommerce.utils.WaitUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RegistrationPage {
 
     private final WebDriver driver;
-    private final WaitUtils waitUtils;
+    private final WebDriverWait wait;
 
-    public static final By NAME_FIELD = By.id("name");
-    public static final By EMAIL_FIELD = By.id("email");
-    public static final By PASSWORD_FIELD = By.id("password");
-    public static final By CREATE_ACCOUNT_BTN = By.cssSelector("button[type=submit]");
-    public static final By NAME_ERROR = By.cssSelector("#name ~ .invalid-feedback");
-    public static final By EMAIL_ERROR = By.cssSelector("#email ~ .invalid-feedback");
-    public static final By PASSWORD_ERROR = By.cssSelector("#password ~ .invalid-feedback");
-    public static final String CLASS_OF_IS_INVALID_ICON = ".is-invalid";
-
-    public RegistrationPage(WebDriver driver, WaitUtils waitUtils) {
+    public RegistrationPage(WebDriver driver, WebDriverWait wait) {
         this.driver = driver;
-        this.waitUtils = waitUtils;
+        this.wait = wait;
     }
 
-
-    public RegistrationPage open() {
+    public void visit() {
         driver.get(Pages.REGISTRATION_PAGE);
-        return this;
+    }
+
+    public void fillInName(String name) {
+        driver.findElement(By.cssSelector("#name")).sendKeys(name);
+    }
+
+    public void fillInEmail(String email) {
+        driver.findElement(By.cssSelector("#email")).sendKeys(email);
+    }
+
+    public void fillInPassword(String password) {
+        driver.findElement(By.cssSelector("#password")).sendKeys(password);
+    }
+
+    public void clickLoginBtn() {
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
     }
 
     public void register(UserCreateRequest request) {
-        driver.findElement(NAME_FIELD).sendKeys(request.getName());
-        driver.findElement(EMAIL_FIELD).sendKeys(request.getEmail());
-        driver.findElement(PASSWORD_FIELD).sendKeys(request.getPassword());
+        fillInName(request.getName());
+        fillInEmail(request.getEmail());
+        fillInPassword(request.getPassword());
 
-        driver.findElement(CREATE_ACCOUNT_BTN).click();
+        clickLoginBtn();
     }
 
-    public WebElement getInvalidField(String id) {
-        return driver.findElement(By.cssSelector(id + CLASS_OF_IS_INVALID_ICON));
+    public void validateFieldError(String field, String message) {
+        String textError = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#%s ~ .invalid-feedback".formatted(field)))).getText();
+        assertThat(textError).isEqualTo(message);
+
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#%s".formatted(field))));
+        assertThat(input.getAttribute("class")).contains("is-invalid");
     }
 
-    public String getErrorText(By locator) {
-        waitUtils.waitElement(locator);
-        return driver.findElement(locator).getText();
+    public void validateFieldErrorIsNotDisplayed(String field) {
+        wait.until(ExpectedConditions.numberOfElementsToBe(By.cssSelector("#%s ~ .invalid-feedback".formatted(field)), 0));
+
+        WebElement input = driver.findElement(By.cssSelector("#%s".formatted(field)));
+        wait.until(ExpectedConditions.not(ExpectedConditions.attributeContains(input, "class", "is-invalid")));
     }
 }
