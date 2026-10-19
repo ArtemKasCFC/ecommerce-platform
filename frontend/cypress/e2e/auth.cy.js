@@ -60,6 +60,36 @@ describe('Login and Logout', () => {
         navbar.validateAuthState(true);
     });
 
+    it('should remain authenticated after page reload', () => {
+        let token;
+
+        cy.intercept('POST', '**/auth/login').as('loginRequest');
+        cy.env(['userEmail', 'userPassword']).then(
+            ({userEmail, userPassword}) => {
+                loginPage.login(userEmail, userPassword)
+            }
+        );
+
+        cy.wait('@loginRequest').then(interception => {
+            expect(interception.response.statusCode).eq(200);
+            expect(interception.response.body).to.have.property('token').that.is.a('string').and.not.empty;
+
+            token = interception.response.body.token;
+        });
+
+        cy.window().then(win => expect(win.localStorage.getItem("token")).eq(token));
+
+        cy.location('pathname').should('eq', ROUTES.HOME);
+
+        navbar.validateAuthState(true);
+
+        cy.reload();
+
+        cy.window().then(win => expect(win.localStorage.getItem("token")).eq(token));
+
+        navbar.validateAuthState(true);
+    });
+
     it('should not log in with an incorrect password', () => {
         cy.intercept('POST', '**/auth/login').as('loginRequest');
         cy.env(['userEmail']).then(
