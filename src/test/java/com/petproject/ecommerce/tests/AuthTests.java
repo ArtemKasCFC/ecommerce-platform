@@ -4,12 +4,14 @@ import com.petproject.ecommerce.api.AuthApi;
 import com.petproject.ecommerce.api.ProductApi;
 import com.petproject.ecommerce.auth.dto.request.LoginRequest;
 import com.petproject.ecommerce.auth.dto.response.LoginResponse;
+import com.petproject.ecommerce.config.PropertiesReader;
 import com.petproject.ecommerce.constants.ValidationMessages;
 import com.petproject.ecommerce.factories.ProductFactory;
 import com.petproject.ecommerce.product.dto.request.ProductCreateRequest;
 import com.petproject.ecommerce.product.dto.response.ErrorResponse;
 import com.petproject.ecommerce.steps.UserSteps;
 import com.petproject.ecommerce.utils.JwtTestUtils;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -20,13 +22,29 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class AuthTests {
 
+    private static String userEmail;
+    private static String userPassword;
+    private static String adminEmail;
+    private static String adminPassword;
+    private static String disabledUserEmail;
+    private static String disabledUserPassword;
+
+
+    @BeforeAll
+    static void getCredentials() {
+        userEmail = PropertiesReader.get("user.email");
+        userPassword = PropertiesReader.get("user.password");
+        adminEmail = PropertiesReader.get("admin.email");
+        adminPassword = PropertiesReader.get("admin.password");
+        disabledUserEmail = PropertiesReader.get("disabled-user.email");
+        disabledUserPassword = PropertiesReader.get("disabled-user.password");
+    }
 
     @Test
     void shouldLoginWithValidCredentialsAsUser() {
-        Map<String, String> credentials = UserSteps.createUser();
         LoginRequest request = LoginRequest.builder()
-                .email(credentials.get("email"))
-                .password(credentials.get("password"))
+                .email(userEmail)
+                .password(userPassword)
                 .build();
 
         LoginResponse response = AuthApi.login(request, LoginResponse.class, 200);
@@ -35,10 +53,9 @@ public class AuthTests {
 
     @Test
     void shouldLoginWithValidCredentialsAsAdmin() {
-        Map<String, String> credentials = UserSteps.createAdmin();
         LoginRequest request = LoginRequest.builder()
-                .email(credentials.get("email"))
-                .password(credentials.get("password"))
+                .email(adminEmail)
+                .password(adminPassword)
                 .build();
 
         LoginResponse response = AuthApi.login(request, LoginResponse.class, 200);
@@ -47,9 +64,8 @@ public class AuthTests {
 
     @Test
     void shouldNotLoginWithInvalidPassword() {
-        Map<String, String> credentials = UserSteps.createUser();
         LoginRequest request = LoginRequest.builder()
-                .email(credentials.get("email"))
+                .email(userEmail)
                 .password("NotRea!Pa22")
                 .build();
 
@@ -62,7 +78,7 @@ public class AuthTests {
     void shouldNotLoginWithNonExistingEmail() {
         LoginRequest request = LoginRequest.builder()
                 .email("not.real.email@gmail.com")
-                .password("NotRea!Pa22")
+                .password(userPassword)
                 .build();
 
         ErrorResponse errorResponse = AuthApi.login(request, ErrorResponse.class, 401);
@@ -72,10 +88,9 @@ public class AuthTests {
 
     @Test
     void shouldNotLoginWithDisabledUser() {
-        Map<String, String> credentials = UserSteps.createDisabledUser();
         LoginRequest request = LoginRequest.builder()
-                .email(credentials.get("email"))
-                .password(credentials.get("password"))
+                .email(disabledUserEmail)
+                .password(disabledUserPassword)
                 .build();
 
         ErrorResponse errorResponse = AuthApi.login(request, ErrorResponse.class, 401);
@@ -85,9 +100,8 @@ public class AuthTests {
 
     @Test
     void shouldNotLoginWithEmptyPassword() {
-        Map<String, String> credentials = UserSteps.createUser();
         LoginRequest request = LoginRequest.builder()
-                .email(credentials.get("email"))
+                .email(userEmail)
                 .password(null)
                 .build();
 
@@ -100,7 +114,7 @@ public class AuthTests {
     void shouldNotLoginWithEmptyEmail() {
         LoginRequest request = LoginRequest.builder()
                 .email(null)
-                .password("JustAPass1!")
+                .password(userPassword)
                 .build();
 
         ErrorResponse errorResponse = AuthApi.login(request, ErrorResponse.class, 400);
@@ -119,7 +133,7 @@ public class AuthTests {
     void shouldNotLoginWithInvalidEmail(String email) {
         LoginRequest request = LoginRequest.builder()
                 .email(email)
-                .password("JustAPass1!")
+                .password(userPassword)
                 .build();
 
         ErrorResponse errorResponse = AuthApi.login(request, ErrorResponse.class, 400);
