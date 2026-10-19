@@ -8,4 +8,5 @@ public final class Pages {
     public static final String URL = "http://localhost:5173";
     public static final String MAIN_PAGE = URL + "/";
     public static final String REGISTRATION_PAGE = URL + "/register";
+    public static final String LOGIN_PAGE = URL + "/login";
 }

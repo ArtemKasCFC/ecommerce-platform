@@ -17,7 +17,6 @@ import java.util.Map;
 public class UserSteps {
 
     public static Map<String, String> createAdmin() {
-
         UserCreateRequest body = UserFactory.defaultUser();
 
         RegistrationResponse response = UserApi.createUser(body, RegistrationResponse.class, 201);
@@ -36,7 +35,6 @@ public class UserSteps {
     }
 
     public static Map<String, String> createDisabledUser() {
-
         UserCreateRequest body = UserFactory.defaultUser();
 
         RegistrationResponse response = UserApi.createUser(body, RegistrationResponse.class, 201);
@@ -51,7 +49,6 @@ public class UserSteps {
 
 
     public static Map<String, String> createUser() {
-
         UserCreateRequest body = UserFactory.defaultUser();
 
         RegistrationResponse response = UserApi.createUser(body, RegistrationResponse.class, 201);
